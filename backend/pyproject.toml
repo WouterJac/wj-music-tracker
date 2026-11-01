@@ -9,6 +9,7 @@ description = "Local web app to explore and analyse a FLAC music collection"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
+    "mutagen>=1.47",
     "uvicorn>=0.30",
 ]
 
