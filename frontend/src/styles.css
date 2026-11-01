@@ -231,6 +231,82 @@ button:disabled {
   font-size: 0.875rem;
 }
 
+/* Album detail */
+.album-detail {
+  display: grid;
+  gap: var(--gutter);
+}
+
+.detail-cover {
+  max-width: 320px;
+}
+
+.album-detail-body h1 {
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+
+.album-artist {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+}
+
+.album-detail-body .album-meta {
+  margin: 0 0 12px;
+}
+
+.technical-info dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.technical-info dt {
+  color: var(--color-muted);
+}
+
+.technical-info dd {
+  margin: 0;
+}
+
+.album-tracks h2 {
+  margin: 16px 0 8px;
+  font-size: 1.125rem;
+}
+
+.track-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.track-table th,
+.track-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.track-table th {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.track-number,
+.track-duration {
+  width: 1%;
+  white-space: nowrap;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-skeleton .skeleton-item {
+  min-height: 120px;
+  margin-bottom: var(--gutter);
+}
+
 /* Artists */
 .artist-list {
   display: flex;
@@ -265,6 +341,13 @@ button:disabled {
 /* States */
 .state {
   padding: 24px 0;
+}
+
+.state a,
+.album-artist a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .state-error {
@@ -316,5 +399,19 @@ button:disabled {
 
   .album-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .album-detail {
+    grid-template-columns: 280px 1fr;
+    align-items: start;
+    column-gap: 32px;
+  }
+
+  .album-detail .album-tracks {
+    grid-column: 2;
+  }
+
+  .detail-cover {
+    grid-row: span 2;
   }
 }

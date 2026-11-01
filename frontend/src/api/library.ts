@@ -21,6 +21,31 @@ export interface Artist {
   album_count: number;
 }
 
+export interface Track {
+  id: number;
+  disc: number | null;
+  number: number | null;
+  title: string | null;
+  duration_seconds: number;
+  sample_rate: number;
+  bit_depth: number;
+  channels: number;
+}
+
+export interface AlbumDetail extends Album {
+  total_duration_seconds: number;
+  tracks: Track[];
+}
+
+export interface ArtistDetail {
+  id: number;
+  name: string;
+  albums: Album[];
+}
+
+/** The server answered 404: the item does not exist, which is not a failure to retry. */
+export class NotFoundError extends Error {}
+
 type Guard<T> = (value: unknown) => value is T;
 type Record_ = Record<string, unknown>;
 
@@ -54,6 +79,40 @@ function isArtist(value: unknown): value is Artist {
   );
 }
 
+function isTrack(value: unknown): value is Track {
+  return (
+    isRecord(value) &&
+    typeof value.id === "number" &&
+    isNullableOf("number", value.disc) &&
+    isNullableOf("number", value.number) &&
+    isNullableOf("string", value.title) &&
+    typeof value.duration_seconds === "number" &&
+    typeof value.sample_rate === "number" &&
+    typeof value.bit_depth === "number" &&
+    typeof value.channels === "number"
+  );
+}
+
+function isAlbumDetail(value: unknown): value is AlbumDetail {
+  return (
+    isAlbum(value) &&
+    isRecord(value) &&
+    typeof value.total_duration_seconds === "number" &&
+    Array.isArray(value.tracks) &&
+    value.tracks.every(isTrack)
+  );
+}
+
+function isArtistDetail(value: unknown): value is ArtistDetail {
+  return (
+    isRecord(value) &&
+    typeof value.id === "number" &&
+    typeof value.name === "string" &&
+    Array.isArray(value.albums) &&
+    value.albums.every(isAlbum)
+  );
+}
+
 function pageOf<T>(isItem: Guard<T>): Guard<Page<T>> {
   return (value): value is Page<T> =>
     isRecord(value) &&
@@ -79,6 +138,9 @@ function withParams(path: string, params: Record<string, string | number | undef
 
 async function getJson<T>(url: string, isValid: Guard<T>): Promise<T> {
   const response = await fetch(url);
+  if (response.status === 404) {
+    throw new NotFoundError(`${url} not found`);
+  }
   if (!response.ok) {
     throw new Error(`${url} responded with ${String(response.status)}`);
   }
@@ -125,4 +187,12 @@ export function fetchArtists(filters: ArtistFilters): Promise<Page<Artist>> {
 
 export function fetchYears(): Promise<number[]> {
   return getJson("/api/years", isYearList);
+}
+
+export function fetchAlbum(id: number): Promise<AlbumDetail> {
+  return getJson(`/api/albums/${String(id)}`, isAlbumDetail);
+}
+
+export function fetchArtist(id: number): Promise<ArtistDetail> {
+  return getJson(`/api/artists/${String(id)}`, isArtistDetail);
 }
