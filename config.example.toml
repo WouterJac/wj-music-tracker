@@ -1,0 +1,15 @@
+# Copy this file to config.local.toml and adjust. config.local.toml is gitignored.
+
+[library]
+# Folder with your FLAC files. The app only reads from it.
+music_path = "D:\\Muziek\\ClaudeTest"
+
+[data]
+# Where the database and cover cache are stored. Outside the repo and the music folder.
+# Leave empty to use %LOCALAPPDATA%\WJMusicTracker
+directory = ""
+
+[server]
+# Bound to localhost only. See API-AUTH.md before changing this.
+host = "127.0.0.1"
+port = 8000

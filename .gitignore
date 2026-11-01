@@ -1,0 +1,42 @@
+# Library data must never be committed (public repository)
+*.flac
+*.mp3
+*.m4a
+*.ogg
+*.wav
+*.lrc
+*.db
+*.sqlite
+*.sqlite3
+data/
+covers/
+cache/
+
+# Local configuration with personal paths
+config.local.toml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/coverage/
+*.log
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
