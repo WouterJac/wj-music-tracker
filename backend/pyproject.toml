@@ -9,6 +9,8 @@ description = "Local web app to explore and analyse a FLAC music collection"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
     "mutagen>=1.47",
     "uvicorn>=0.30",
 ]

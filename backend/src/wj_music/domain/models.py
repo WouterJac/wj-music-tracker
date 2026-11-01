@@ -31,3 +31,11 @@ class FlacFile:
     path: Path
     tags: TrackTags
     audio: AudioInfo
+
+
+@dataclass(frozen=True)
+class ScannedFile:
+    path: Path
+    size_bytes: int
+    mtime: float
+    error: str | None = None
