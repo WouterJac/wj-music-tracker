@@ -1,4 +1,4 @@
-"""Settings from built-in defaults, overridden by an optional TOML file."""
+"""Settings from built-in defaults, an optional TOML file and environment variables."""
 
 import os
 import tomllib
@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-DEFAULT_MUSIC_PATH = Path(r"D:\Muziek\ClaudeTest")
+MUSIC_PATH_ENV = "WJ_MUSIC_PATH"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
 DATA_DIR_NAME = "WJMusicTracker"
@@ -15,7 +15,7 @@ DATA_DIR_NAME = "WJMusicTracker"
 
 @dataclass(frozen=True)
 class Settings:
-    music_path: Path
+    music_path: Path | None
     data_dir: Path
     host: str
     port: int
@@ -31,7 +31,7 @@ def load_settings(
     config_file: Path | None = None,
     env: Mapping[str, str] | None = None,
 ) -> Settings:
-    """Build settings from defaults, then apply overrides from `config_file` if it exists."""
+    """Build settings from defaults, then the config file, then environment overrides."""
     environ = os.environ if env is None else env
     raw: dict[str, Any] = {}
     if config_file is not None and config_file.exists():
@@ -46,9 +46,10 @@ def load_settings(
     if not isinstance(port, int) or not 1 <= port <= 65535:
         raise ValueError(f"server.port must be an integer from 1 to 65535, got {port!r}")
 
+    music_path = environ.get(MUSIC_PATH_ENV) or library.get("music_path", "")
     directory = data.get("directory", "")
     return Settings(
-        music_path=Path(library.get("music_path", DEFAULT_MUSIC_PATH)),
+        music_path=Path(music_path) if music_path else None,
         data_dir=Path(directory) if directory else default_data_dir(environ),
         host=server.get("host", DEFAULT_HOST),
         port=port,

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from wj_music.config import DEFAULT_HOST, DEFAULT_MUSIC_PATH, DEFAULT_PORT, load_settings
+from wj_music.config import DEFAULT_HOST, DEFAULT_PORT, load_settings
 
 
 def write_config(path: Path, text: str) -> Path:
@@ -13,13 +13,13 @@ def write_config(path: Path, text: str) -> Path:
 def test_defaults_without_config_file(tmp_path: Path) -> None:
     settings = load_settings(tmp_path / "missing.toml", {"LOCALAPPDATA": str(tmp_path)})
 
-    assert settings.music_path == DEFAULT_MUSIC_PATH
+    assert settings.music_path is None
     assert settings.data_dir == tmp_path / "WJMusicTracker"
     assert settings.host == DEFAULT_HOST
     assert settings.port == DEFAULT_PORT
 
 
-def test_data_dir_falls_back_to_home_when_localappdata_unset(tmp_path: Path) -> None:
+def test_data_dir_falls_back_to_home_when_localappdata_unset() -> None:
     settings = load_settings(env={})
 
     assert settings.data_dir == Path.home() / "AppData" / "Local" / "WJMusicTracker"
@@ -49,13 +49,43 @@ port = 9000
     assert settings.port == 9000
 
 
+def test_empty_music_path_in_file_means_unset(tmp_path: Path) -> None:
+    config = write_config(tmp_path / "config.local.toml", '[library]\nmusic_path = ""\n')
+
+    settings = load_settings(config, {})
+
+    assert settings.music_path is None
+
+
+def test_environment_variable_overrides_config_file(tmp_path: Path) -> None:
+    config = write_config(tmp_path / "config.local.toml", '[library]\nmusic_path = "E:\\\\Music"\n')
+
+    settings = load_settings(config, {"WJ_MUSIC_PATH": "G:\\Flac"})
+
+    assert settings.music_path == Path("G:\\Flac")
+
+
+def test_environment_variable_sets_music_path_without_file(tmp_path: Path) -> None:
+    settings = load_settings(tmp_path / "missing.toml", {"WJ_MUSIC_PATH": "G:\\Flac"})
+
+    assert settings.music_path == Path("G:\\Flac")
+
+
+def test_empty_environment_variable_is_ignored(tmp_path: Path) -> None:
+    config = write_config(tmp_path / "config.local.toml", '[library]\nmusic_path = "E:\\\\Music"\n')
+
+    settings = load_settings(config, {"WJ_MUSIC_PATH": ""})
+
+    assert settings.music_path == Path("E:\\Music")
+
+
 def test_partial_config_keeps_other_defaults(tmp_path: Path) -> None:
     config = write_config(tmp_path / "config.local.toml", "[server]\nport = 8123\n")
 
     settings = load_settings(config, {"LOCALAPPDATA": str(tmp_path)})
 
     assert settings.port == 8123
-    assert settings.music_path == DEFAULT_MUSIC_PATH
+    assert settings.music_path is None
     assert settings.data_dir == tmp_path / "WJMusicTracker"
 
 

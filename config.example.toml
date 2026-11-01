@@ -1,8 +1,10 @@
 # Copy this file to config.local.toml and adjust. config.local.toml is gitignored.
+# The music path can also come from the WJ_MUSIC_PATH environment variable, which overrides this file.
 
 [library]
 # Folder with your FLAC files. The app only reads from it.
-music_path = "D:\\Muziek\\ClaudeTest"
+# Required before scanning. Set it here or with the WJ_MUSIC_PATH environment variable.
+music_path = ""
 
 [data]
 # Where the database and cover cache are stored. Outside the repo and the music folder.
