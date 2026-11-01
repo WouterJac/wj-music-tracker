@@ -22,4 +22,4 @@ A local web app that analyses a FLAC music collection: browse albums and artists
 - [GIT-WORKFLOW.md](GIT-WORKFLOW.md): branches, commits, shipping.
 
 ## Current phase
-Phases 0 to 3 are built (foundation, library scanner, library browsing, lyrics). Next is phase 4 (statistics dashboard, SCRUM-9). See the epics in Jira SCRUM-5 to SCRUM-16.
+Phases 0 to 4 are built (foundation, library scanner, library browsing, lyrics, statistics dashboard). The next phase is the next open epic in Jira. See the epics in Jira SCRUM-5 to SCRUM-16.

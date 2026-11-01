@@ -13,6 +13,7 @@ export function Layout() {
           <NavLink to="/albums">Albums</NavLink>
           <NavLink to="/artists">Artists</NavLink>
           <NavLink to="/lyrics">Lyrics</NavLink>
+          <NavLink to="/stats">Statistics</NavLink>
         </nav>
       </header>
       <main>

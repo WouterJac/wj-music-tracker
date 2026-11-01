@@ -272,6 +272,80 @@ export function fetchArtists(filters: ArtistFilters): Promise<Page<Artist>> {
   return getJson(url, pageOf(isArtist));
 }
 
+export interface Bucket {
+  label: string;
+  count: number;
+}
+
+export interface TopArtist {
+  id: number;
+  name: string;
+  tracks: number;
+  albums: number;
+}
+
+export interface LibraryStats {
+  tracks: number;
+  albums: number;
+  artists: number;
+  total_duration_seconds: number;
+  hires_tracks: number;
+  albums_by_decade: Bucket[];
+  albums_by_year: Bucket[];
+  tracks_by_format: Bucket[];
+  tracks_by_channels: Bucket[];
+  tracks_by_genre: Bucket[];
+  albums_by_track_count: Bucket[];
+  albums_by_length: Bucket[];
+  top_artists: TopArtist[];
+}
+
+function isBucketList(value: unknown): value is Bucket[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) => isRecord(item) && typeof item.label === "string" && typeof item.count === "number",
+    )
+  );
+}
+
+function isTopArtistList(value: unknown): value is TopArtist[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.id === "number" &&
+        typeof item.name === "string" &&
+        typeof item.tracks === "number" &&
+        typeof item.albums === "number",
+    )
+  );
+}
+
+function isLibraryStats(value: unknown): value is LibraryStats {
+  return (
+    isRecord(value) &&
+    typeof value.tracks === "number" &&
+    typeof value.albums === "number" &&
+    typeof value.artists === "number" &&
+    typeof value.total_duration_seconds === "number" &&
+    typeof value.hires_tracks === "number" &&
+    isBucketList(value.albums_by_decade) &&
+    isBucketList(value.albums_by_year) &&
+    isBucketList(value.tracks_by_format) &&
+    isBucketList(value.tracks_by_channels) &&
+    isBucketList(value.tracks_by_genre) &&
+    isBucketList(value.albums_by_track_count) &&
+    isBucketList(value.albums_by_length) &&
+    isTopArtistList(value.top_artists)
+  );
+}
+
+export function fetchStats(): Promise<LibraryStats> {
+  return getJson("/api/stats", isLibraryStats);
+}
+
 export function fetchYears(): Promise<number[]> {
   return getJson("/api/years", isYearList);
 }
