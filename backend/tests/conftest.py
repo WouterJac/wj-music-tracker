@@ -61,14 +61,36 @@ def library(engine: Engine, tmp_path: Path) -> Library:
     )
     track(
         "low1.flac",
-        {**low, "TITLE": ["Breaking Glass"], "TRACKNUMBER": ["1/11"]},
+        {
+            **low,
+            "TITLE": ["Breaking Glass"],
+            "TRACKNUMBER": ["1/11"],
+            "SYNCEDLYRICS": [
+                "[ar:David Bowie]\n[00:01.00]Baby, I'm not special\n[00:06.50]Breaking glass"
+            ],
+        },
         seconds=200,
         picture=COVER_BYTES,
     )
     heroes = {"ARTIST": ["David Bowie"], "ALBUM": ['"Heroes"'], "DATE": ["1977"]}
-    track("heroes1.flac", {**heroes, "TITLE": ["Beauty and the Beast"], "TRACKNUMBER": ["1"]})
+    heroes_lyrics = (
+        "I, I will be king\nAnd you, you will be queen\nWe can be heroes, just for one day"
+    )
+    track(
+        "heroes1.flac",
+        {
+            **heroes,
+            "TITLE": ["Beauty and the Beast"],
+            "TRACKNUMBER": ["1"],
+            "LYRICS": [heroes_lyrics],
+        },
+    )
     green = {"ARTIST": ["Brian Eno"], "ALBUM": ["Another Green World"], "DATE": ["1975"]}
-    track("green1.flac", {**green, "TITLE": ["Sky Saw"], "TRACKNUMBER": ["1"]})
+    sky_lyrics = "Wind in the sky\nand the moon is high"
+    track(
+        "green1.flac",
+        {**green, "TITLE": ["Sky Saw"], "TRACKNUMBER": ["1"], "UNSYNCEDLYRICS": [sky_lyrics]},
+    )
     disc = {"ARTIST": ["Brian Eno"], "ALBUM": ["Discreet Music"], "DATE": ["1975"]}
     track(
         "disc2.flac", {**disc, "TITLE": ["Second disc"], "DISCNUMBER": ["2"], "TRACKNUMBER": ["1"]}

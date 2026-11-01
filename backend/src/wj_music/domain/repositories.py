@@ -8,7 +8,9 @@ from wj_music.domain.library import (
     AlbumSummary,
     ArtistDetail,
     ArtistSummary,
+    LyricsHit,
     Page,
+    TrackInfo,
 )
 from wj_music.domain.models import FlacFile, Picture, ScannedFile
 
@@ -57,3 +59,9 @@ class LibraryReader(Protocol):
     def list_years(self) -> list[int]: ...
 
     def album_cover_file(self, album_id: int) -> str | None: ...
+
+
+class TrackReader(Protocol):
+    def get_track(self, track_id: int) -> TrackInfo | None: ...
+
+    def search_lyrics(self, query: str, *, limit: int, offset: int = 0) -> Page[LyricsHit]: ...
