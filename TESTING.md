@@ -31,6 +31,13 @@ Coverage is a guide. The acceptance criteria matter more.
 3. UI stories: screenshots checked at phone and desktop widths.
 4. Manual check where a test cannot cover it (for example a real scan of the library), with the result noted in the Jira story.
 
+## Test-first (TDD)
+Required wherever a test can express the behaviour. Skip it only for pure configuration or scaffolding with no behaviour (for example `pyproject.toml`, `tsconfig.json`).
+1. Write the failing test first. Run it and confirm it fails for the right reason (a missing function, a wrong value), not a typo or import error that hides the behaviour.
+2. Write the smallest code that makes it pass.
+3. Run the full checks for the layer. Only then continue with more code.
+Do not write feature code unless the relevant tests pass. Refactor only with the tests green.
+
 ## Running tests
 - Backend: `cd backend && pytest`
 - Frontend: `cd frontend && npm test`

@@ -1,0 +1,25 @@
+:root {
+  color-scheme: light dark;
+  --color-bg: #f7f7f5;
+  --color-fg: #1c1c1a;
+  font-family: system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #161614;
+    --color-fg: #ecebe7;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+main {
+  padding: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+}
