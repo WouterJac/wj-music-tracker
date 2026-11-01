@@ -24,11 +24,12 @@ Dependencies point inward only.
 | Storage | `wj_music.storage` | domain | SQLAlchemy models, repositories, migrations. |
 | Services | `wj_music.services` | domain, storage interfaces | Business logic. Never imports FastAPI. |
 | API | `wj_music.api` | services | Translates HTTP to service calls and back. Thin. |
-| CLI | `wj_music.cli` | services | `wj-music scan`, `wj-music serve`. |
+| CLI | `wj_music.cli` | services, bootstrap | `wj-music scan`, `wj-music serve`. |
+| Composition root | `wj_music.bootstrap` | everything | Wires settings to storage, scanner and services. The only place that knows concrete classes. |
 
 ## Data flow
-1. **Scan:** the scanner walks the music folder, reads each `.flac`, and produces domain objects. The library service stores them via repositories.
-2. **Incremental:** a scanned file is skipped when its path, size and mtime match the stored record. Deleted files are removed from the DB.
+1. **Scan:** the scanner walks the music folder, reads each `.flac`, and produces domain objects. `scan_library` stores them through the repository contracts in `domain`.
+2. **Incremental:** a scanned file is skipped when its path, size and mtime match the stored record. Deleted files are removed from the DB, and albums or artists left without tracks are pruned. A missing music folder aborts the scan, so an unplugged drive never empties the library.
 3. **Serve:** the API reads through services only. Services read from the DB, never from the music folder.
 
 ## Data directory
