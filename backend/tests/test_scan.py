@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ from sqlalchemy import Engine, func, select
 
 from flac_builder import build_flac
 from wj_music.domain.models import ScannedFile
+from wj_music.scanner.errors import MusicFolderNotFoundError
 from wj_music.scanner.scan import ScanReport, scan_library
 from wj_music.storage.covers import FileCoverStore
 from wj_music.storage.models import AlbumRow, ArtistRow, ScannedFileRow, TrackRow
@@ -288,3 +290,40 @@ def test_scan_records_each_file_in_the_scanned_files_table(
     assert [r.path for r in records] == [path]
     assert isinstance(records[0], ScannedFile)
     assert records[0].error is None
+
+
+class TestUnavailableMusicFolder:
+    def test_missing_folder_raises_and_keeps_the_library(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        write_track(music, "01.flac", TITLE=["Keep me"])
+        scan(engine, music, covers)
+        shutil.rmtree(music)
+
+        with pytest.raises(MusicFolderNotFoundError, match="music"):
+            scan(engine, music, covers)
+
+        assert row_count(engine, TrackRow) == 1
+        assert row_count(engine, ScannedFileRow) == 1
+
+    def test_path_that_is_a_file_is_rejected(
+        self, engine: Engine, tmp_path: Path, covers: FileCoverStore
+    ) -> None:
+        not_a_folder = tmp_path / "library.txt"
+        not_a_folder.write_text("x")
+
+        with pytest.raises(MusicFolderNotFoundError):
+            scan(engine, not_a_folder, covers)
+
+
+def test_file_that_vanishes_during_the_walk_is_reported_and_the_scan_continues(
+    engine: Engine, music: Path, covers: FileCoverStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    real = write_track(music, "01.flac", TITLE=["Real"])
+    ghost = music / "ghost.flac"
+    monkeypatch.setattr("wj_music.scanner.scan.find_flac_files", lambda _root: [ghost, real])
+
+    report = scan(engine, music, covers)
+
+    assert [path for path, _ in report.errors] == [ghost]
+    assert report.added == [real]

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from wj_music.domain.models import ScannedFile
 from wj_music.domain.repositories import CoverStore, ScannedFileRepository, TrackRepository
-from wj_music.scanner.errors import InvalidFlacError
+from wj_music.scanner.errors import InvalidFlacError, MusicFolderNotFoundError
 from wj_music.scanner.flac_reader import read_flac
 
 logger = logging.getLogger(__name__)
@@ -33,12 +33,21 @@ def scan_library(
     tracks: TrackRepository,
     covers: CoverStore,
 ) -> ScanReport:
+    if not root.is_dir():
+        raise MusicFolderNotFoundError(root)
     report = ScanReport()
     known = {record.path: record for record in scanned.all()}
     found = set(find_flac_files(root))
 
     for path in sorted(found):
-        stat = path.stat()
+        try:
+            stat = path.stat()
+        except OSError as exc:
+            # The file vanished or became unreadable after the walk. Leave its records alone;
+            # the next scan removes them if the file is really gone.
+            logger.warning("Could not stat %s: %s", path, exc)
+            report.errors.append((path, str(exc)))
+            continue
         previous = known.get(path)
         if previous is not None and _unchanged(previous, stat):
             report.unchanged += 1
