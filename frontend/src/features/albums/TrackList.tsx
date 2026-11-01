@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import type { Track } from "../../api/library";
 import { formatDuration } from "../../lib/format";
 
@@ -19,14 +21,18 @@ function TrackTable({ tracks }: { tracks: Track[] }) {
           <th scope="col">#</th>
           <th scope="col">Title</th>
           <th scope="col">Duration</th>
+          <th scope="col">Lyrics</th>
         </tr>
       </thead>
       <tbody>
         {tracks.map((track) => (
           <tr key={track.id}>
             <td className="track-number">{track.number === null ? "–" : String(track.number)}</td>
-            <td>{track.title ?? "Untitled track"}</td>
+            <td>
+              <Link to={`/tracks/${String(track.id)}`}>{track.title ?? "Untitled track"}</Link>
+            </td>
             <td className="track-duration">{formatDuration(track.duration_seconds)}</td>
+            <td className="track-lyrics">{track.has_lyrics ? "Lyrics" : ""}</td>
           </tr>
         ))}
       </tbody>

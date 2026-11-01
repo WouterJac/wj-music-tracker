@@ -30,6 +30,44 @@ export interface Track {
   sample_rate: number;
   bit_depth: number;
   channels: number;
+  has_lyrics: boolean;
+}
+
+export interface LyricLine {
+  time_seconds: number;
+  text: string;
+}
+
+export interface TrackLyrics {
+  plain: string | null;
+  synced_lines: LyricLine[] | null;
+}
+
+export interface TrackInfo {
+  id: number;
+  title: string | null;
+  disc: number | null;
+  number: number | null;
+  duration_seconds: number;
+  sample_rate: number;
+  bit_depth: number;
+  channels: number;
+  album_id: number | null;
+  album_title: string | null;
+  artist_id: number | null;
+  artist_name: string | null;
+  cover_url: string | null;
+  lyrics: TrackLyrics | null;
+}
+
+export interface LyricsHit {
+  track_id: number;
+  title: string | null;
+  album_id: number | null;
+  album_title: string | null;
+  artist_id: number | null;
+  artist_name: string | null;
+  snippet: string;
 }
 
 export interface AlbumDetail extends Album {
@@ -89,7 +127,56 @@ function isTrack(value: unknown): value is Track {
     typeof value.duration_seconds === "number" &&
     typeof value.sample_rate === "number" &&
     typeof value.bit_depth === "number" &&
-    typeof value.channels === "number"
+    typeof value.channels === "number" &&
+    typeof value.has_lyrics === "boolean"
+  );
+}
+
+function isLyricLine(value: unknown): value is LyricLine {
+  return (
+    isRecord(value) && typeof value.time_seconds === "number" && typeof value.text === "string"
+  );
+}
+
+function isTrackLyrics(value: unknown): value is TrackLyrics {
+  return (
+    isRecord(value) &&
+    isNullableOf("string", value.plain) &&
+    (value.synced_lines === null ||
+      (Array.isArray(value.synced_lines) && value.synced_lines.every(isLyricLine)))
+  );
+}
+
+function isTrackInfo(value: unknown): value is TrackInfo {
+  return (
+    isRecord(value) &&
+    typeof value.id === "number" &&
+    isNullableOf("string", value.title) &&
+    isNullableOf("number", value.disc) &&
+    isNullableOf("number", value.number) &&
+    typeof value.duration_seconds === "number" &&
+    typeof value.sample_rate === "number" &&
+    typeof value.bit_depth === "number" &&
+    typeof value.channels === "number" &&
+    isNullableOf("number", value.album_id) &&
+    isNullableOf("string", value.album_title) &&
+    isNullableOf("number", value.artist_id) &&
+    isNullableOf("string", value.artist_name) &&
+    isNullableOf("string", value.cover_url) &&
+    (value.lyrics === null || isTrackLyrics(value.lyrics))
+  );
+}
+
+function isLyricsHit(value: unknown): value is LyricsHit {
+  return (
+    isRecord(value) &&
+    typeof value.track_id === "number" &&
+    isNullableOf("string", value.title) &&
+    isNullableOf("number", value.album_id) &&
+    isNullableOf("string", value.album_title) &&
+    isNullableOf("number", value.artist_id) &&
+    isNullableOf("string", value.artist_name) &&
+    typeof value.snippet === "string"
   );
 }
 
@@ -195,4 +282,23 @@ export function fetchAlbum(id: number): Promise<AlbumDetail> {
 
 export function fetchArtist(id: number): Promise<ArtistDetail> {
   return getJson(`/api/artists/${String(id)}`, isArtistDetail);
+}
+
+export function fetchTrack(id: number): Promise<TrackInfo> {
+  return getJson(`/api/tracks/${String(id)}`, isTrackInfo);
+}
+
+export interface LyricsSearchFilters {
+  query: string;
+  limit: number;
+  offset: number;
+}
+
+export function searchLyrics(filters: LyricsSearchFilters): Promise<Page<LyricsHit>> {
+  const url = withParams("/api/lyrics/search", {
+    q: filters.query,
+    limit: filters.limit,
+    offset: filters.offset,
+  });
+  return getJson(url, pageOf(isLyricsHit));
 }

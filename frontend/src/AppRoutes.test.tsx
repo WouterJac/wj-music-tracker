@@ -38,6 +38,16 @@ describe("routes", () => {
     expect(screen.getByRole("link", { name: "Artists" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("has a lyrics page in the navigation", async () => {
+    api();
+    const user = userEvent.setup();
+    renderAt("/albums");
+
+    await user.click(screen.getByRole("link", { name: "Lyrics" }));
+
+    expect(await screen.findByRole("heading", { name: "Lyrics", level: 1 })).toBeInTheDocument();
+  });
+
   it("shows the server status in the footer", async () => {
     api();
 
