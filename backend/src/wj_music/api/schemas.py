@@ -9,9 +9,12 @@ from wj_music.domain.library import (
     AlbumSummary,
     ArtistDetail,
     ArtistSummary,
+    LyricsHit,
     Page,
     TrackDetail,
+    TrackInfo,
 )
+from wj_music.domain.lyrics import parse_lrc
 
 T = TypeVar("T")
 
@@ -47,6 +50,7 @@ class TrackOut(BaseModel):
     sample_rate: int
     bit_depth: int
     channels: int
+    has_lyrics: bool
 
 
 class AlbumDetailOut(AlbumOut):
@@ -118,4 +122,87 @@ def _track_out(track: TrackDetail) -> TrackOut:
         sample_rate=track.sample_rate,
         bit_depth=track.bit_depth,
         channels=track.channels,
+        has_lyrics=track.has_lyrics,
     )
+
+
+class LyricLineOut(BaseModel):
+    time_seconds: float
+    text: str
+
+
+class LyricsOut(BaseModel):
+    plain: str | None
+    synced_lines: list[LyricLineOut] | None
+
+
+class TrackInfoOut(BaseModel):
+    id: int
+    title: str | None
+    disc: int | None
+    number: int | None
+    duration_seconds: float
+    sample_rate: int
+    bit_depth: int
+    channels: int
+    album_id: int | None
+    album_title: str | None
+    artist_id: int | None
+    artist_name: str | None
+    cover_url: str | None
+    lyrics: LyricsOut | None
+
+
+class LyricsHitOut(BaseModel):
+    track_id: int
+    title: str | None
+    album_id: int | None
+    album_title: str | None
+    artist_id: int | None
+    artist_name: str | None
+    snippet: str
+
+
+def track_info_out(info: TrackInfo) -> TrackInfoOut:
+    lyrics = None
+    if info.plain_lyrics is not None or info.synced_lrc is not None:
+        lines = parse_lrc(info.synced_lrc) if info.synced_lrc else None
+        lyrics = LyricsOut(
+            plain=info.plain_lyrics,
+            synced_lines=[LyricLineOut(time_seconds=x.time_seconds, text=x.text) for x in lines]
+            if lines
+            else None,
+        )
+    has_cover = info.album_has_cover and info.album_id is not None
+    return TrackInfoOut(
+        id=info.id,
+        title=info.title,
+        disc=info.disc,
+        number=info.number,
+        duration_seconds=info.duration_seconds,
+        sample_rate=info.sample_rate,
+        bit_depth=info.bit_depth,
+        channels=info.channels,
+        album_id=info.album_id,
+        album_title=info.album_title,
+        artist_id=info.artist_id,
+        artist_name=info.artist_name,
+        cover_url=f"/api/albums/{info.album_id}/cover" if has_cover else None,
+        lyrics=lyrics,
+    )
+
+
+def lyrics_page_out(page: Page[LyricsHit], limit: int, offset: int) -> PageOut[LyricsHitOut]:
+    items = [
+        LyricsHitOut(
+            track_id=h.track_id,
+            title=h.title,
+            album_id=h.album_id,
+            album_title=h.album_title,
+            artist_id=h.artist_id,
+            artist_name=h.artist_name,
+            snippet=h.snippet,
+        )
+        for h in page.items
+    ]
+    return PageOut(items=items, total=page.total, limit=limit, offset=offset)

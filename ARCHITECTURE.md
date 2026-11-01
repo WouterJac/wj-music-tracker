@@ -29,7 +29,7 @@ Dependencies point inward only.
 
 ## Data flow
 1. **Scan:** the scanner walks the music folder, reads each `.flac`, and produces domain objects. `scan_library` stores them through the repository contracts in `domain`.
-2. **Incremental:** a scanned file is skipped when its path, size and mtime match the stored record. Deleted files are removed from the DB, and albums or artists left without tracks are pruned. A missing music folder aborts the scan, so an unplugged drive never empties the library.
+2. **Incremental:** a scanned file is skipped when its path, size and mtime match the stored record. Deleted files are removed from the DB, and albums or artists left without tracks are pruned. A sidecar `.lrc` next to a FLAC counts as part of that file: adding, editing or removing it rescans the track. A missing music folder aborts the scan, so an unplugged drive never empties the library.
 3. **Serve:** the API reads through services only. Services read from the DB, never from the music folder.
 
 ## Data directory

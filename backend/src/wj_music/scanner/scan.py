@@ -12,6 +12,7 @@ from wj_music.domain.models import ScannedFile
 from wj_music.domain.repositories import CoverStore, ScannedFileRepository, TrackRepository
 from wj_music.scanner.errors import InvalidFlacError, MusicFolderNotFoundError
 from wj_music.scanner.flac_reader import read_flac
+from wj_music.scanner.lyrics_file import sidecar_stat
 
 logger = logging.getLogger(__name__)
 FLAC_SUFFIX = ".flac"
@@ -49,13 +50,14 @@ def scan_library(
             report.errors.append((path, str(exc)))
             continue
         previous = known.get(path)
-        if previous is not None and _unchanged(previous, stat):
+        sidecar = sidecar_stat(path)
+        if previous is not None and _unchanged(previous, stat, sidecar):
             report.unchanged += 1
             if previous.error is not None:
                 report.errors.append((path, previous.error))
             continue
 
-        error = _index(path, stat, tracks=tracks, scanned=scanned, covers=covers)
+        error = _index(path, stat, sidecar, tracks=tracks, scanned=scanned, covers=covers)
         if error is not None:
             report.errors.append((path, error))
         elif previous is None:
@@ -80,13 +82,21 @@ def find_flac_files(root: Path) -> list[Path]:
     ]
 
 
-def _unchanged(previous: ScannedFile, stat: os.stat_result) -> bool:
-    return previous.size_bytes == stat.st_size and previous.mtime == stat.st_mtime
+def _unchanged(previous: ScannedFile, stat: os.stat_result, sidecar: os.stat_result | None) -> bool:
+    sidecar_size = sidecar.st_size if sidecar else None
+    sidecar_mtime = sidecar.st_mtime if sidecar else None
+    return (
+        previous.size_bytes == stat.st_size
+        and previous.mtime == stat.st_mtime
+        and previous.lyrics_size_bytes == sidecar_size
+        and previous.lyrics_mtime == sidecar_mtime
+    )
 
 
 def _index(
     path: Path,
     stat: os.stat_result,
+    sidecar: os.stat_result | None,
     *,
     tracks: TrackRepository,
     scanned: ScannedFileRepository,
@@ -100,10 +110,23 @@ def _index(
         logger.warning("Could not read %s: %s", path, exc)
         error = str(exc)
         tracks.delete(path)
-        scanned.save(ScannedFile(path, stat.st_size, stat.st_mtime, error=error))
+        scanned.save(_record(path, stat, sidecar, error))
         return error
 
     cover_file = covers.store(flac.picture) if flac.picture is not None else None
     tracks.save(flac, cover_file=cover_file)
-    scanned.save(ScannedFile(path, stat.st_size, stat.st_mtime))
+    scanned.save(_record(path, stat, sidecar))
     return None
+
+
+def _record(
+    path: Path, stat: os.stat_result, sidecar: os.stat_result | None, error: str | None = None
+) -> ScannedFile:
+    return ScannedFile(
+        path,
+        stat.st_size,
+        stat.st_mtime,
+        error=error,
+        lyrics_size_bytes=sidecar.st_size if sidecar else None,
+        lyrics_mtime=sidecar.st_mtime if sidecar else None,
+    )

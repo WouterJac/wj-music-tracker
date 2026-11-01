@@ -54,9 +54,24 @@ describe("AlbumDetailPage", () => {
     const rows = await screen.findAllByRole("row");
     const cells = rows.slice(1).map((row) => within(row).getAllByRole("cell"));
     expect(cells.map((c) => c.map((cell) => cell.textContent))).toEqual([
-      ["1", "Breaking Glass", "3:20"],
-      ["2", "Speed of Life", "2:30"],
+      ["1", "Breaking Glass", "3:20", "Lyrics"],
+      ["2", "Speed of Life", "2:30", ""],
     ]);
+  });
+
+  it("links each track title to its track page", async () => {
+    albumApi();
+
+    renderAt("/albums/1");
+
+    expect(await screen.findByRole("link", { name: "Breaking Glass" })).toHaveAttribute(
+      "href",
+      "/tracks/1",
+    );
+    expect(screen.getByRole("link", { name: "Speed of Life" })).toHaveAttribute(
+      "href",
+      "/tracks/2",
+    );
   });
 
   it("shows technical info for the album", async () => {

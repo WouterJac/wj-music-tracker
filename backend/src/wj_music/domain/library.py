@@ -40,6 +40,7 @@ class TrackDetail:
     sample_rate: int
     bit_depth: int
     channels: int
+    has_lyrics: bool = False
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,36 @@ class AlbumDetail:
     @property
     def total_duration_seconds(self) -> float:
         return round(sum(track.duration_seconds for track in self.tracks), 3)
+
+
+@dataclass(frozen=True)
+class TrackInfo:
+    id: int
+    title: str | None
+    disc: int | None
+    number: int | None
+    duration_seconds: float
+    sample_rate: int
+    bit_depth: int
+    channels: int
+    album_id: int | None
+    album_title: str | None
+    artist_id: int | None
+    artist_name: str | None
+    album_has_cover: bool
+    plain_lyrics: str | None
+    synced_lrc: str | None
+
+
+@dataclass(frozen=True)
+class LyricsHit:
+    track_id: int
+    title: str | None
+    album_id: int | None
+    album_title: str | None
+    artist_id: int | None
+    artist_name: str | None
+    snippet: str
 
 
 @dataclass(frozen=True)

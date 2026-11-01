@@ -151,3 +151,37 @@ class TestTrackRepository:
         assert row.channels == 2
         assert row.duration_seconds == 3.0
         assert row.file_path == str(path)
+
+
+class TestLyricsStorage:
+    def test_plain_and_synced_lyrics_are_stored(self, engine: Engine, tmp_path: Path) -> None:
+        path = make_flac(tmp_path, "01.flac", LYRICS=["[00:01.00]la\n[00:02.00]di"])
+        SqlTrackRepository(engine).save(read_flac(path))
+
+        with engine.connect() as conn:
+            row = conn.execute(select(TrackRow.lyrics, TrackRow.synced_lyrics)).one()
+
+        assert row.lyrics == "la\ndi"
+        assert row.synced_lyrics == "[00:01.00]la\n[00:02.00]di"
+
+    def test_resaving_without_lyrics_clears_them(self, engine: Engine, tmp_path: Path) -> None:
+        path = make_flac(tmp_path, "01.flac", LYRICS=["la"])
+        repo = SqlTrackRepository(engine)
+        repo.save(read_flac(path))
+        path.write_bytes(build_flac(tags={"TITLE": ["now empty"]}))
+
+        repo.save(read_flac(path))
+
+        with engine.connect() as conn:
+            row = conn.execute(select(TrackRow.lyrics, TrackRow.synced_lyrics)).one()
+        assert (row.lyrics, row.synced_lyrics) == (None, None)
+
+    def test_sidecar_signature_is_kept_on_the_scanned_file(
+        self, engine: Engine, tmp_path: Path
+    ) -> None:
+        repo = SqlScannedFileRepository(engine)
+        record = ScannedFile(tmp_path / "a.flac", 10, 1.0, lyrics_size_bytes=42, lyrics_mtime=7.5)
+
+        repo.save(record)
+
+        assert repo.all() == [record]

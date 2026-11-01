@@ -6,6 +6,8 @@ import { AlbumDetailPage } from "./features/albums/AlbumDetailPage";
 import { AlbumsPage } from "./features/albums/AlbumsPage";
 import { ArtistDetailPage } from "./features/artists/ArtistDetailPage";
 import { ArtistsPage } from "./features/artists/ArtistsPage";
+import { LyricsSearchPage } from "./features/lyrics/LyricsSearchPage";
+import { TrackPage } from "./features/tracks/TrackPage";
 
 export function AppRoutes() {
   return (
@@ -16,6 +18,8 @@ export function AppRoutes() {
         <Route path="albums/:albumId" element={<AlbumDetailPage />} />
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:artistId" element={<ArtistDetailPage />} />
+        <Route path="tracks/:trackId" element={<TrackPage />} />
+        <Route path="lyrics" element={<LyricsSearchPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

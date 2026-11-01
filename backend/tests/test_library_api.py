@@ -20,6 +20,7 @@ TRACK_KEYS = {
     "sample_rate",
     "bit_depth",
     "channels",
+    "has_lyrics",
 }
 
 

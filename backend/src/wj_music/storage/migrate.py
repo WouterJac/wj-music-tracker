@@ -13,9 +13,9 @@ def _config(db_path: Path) -> Config:
     return config
 
 
-def upgrade_database(db_path: Path) -> None:
+def upgrade_database(db_path: Path, revision: str = "head") -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    command.upgrade(_config(db_path), "head")
+    command.upgrade(_config(db_path), revision)
 
 
 def downgrade_database(db_path: Path, revision: str = "base") -> None:

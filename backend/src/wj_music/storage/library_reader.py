@@ -1,6 +1,6 @@
 """SQL queries behind the browsing API. Read only."""
 
-from typing import Any, cast
+from typing import Any
 
 from sqlalchemy import ColumnElement, Engine, Row, Select, distinct, func, or_, select
 from sqlalchemy.orm import Session
@@ -16,8 +16,7 @@ from wj_music.domain.library import (
     year_from_date,
 )
 from wj_music.storage.models import AlbumRow, ArtistRow, TrackRow
-
-LIKE_ESCAPE = "\\"
+from wj_music.storage.search import contains as _contains
 
 
 class SqlLibraryReader:
@@ -71,6 +70,7 @@ class SqlLibraryReader:
                         sample_rate=t.sample_rate,
                         bit_depth=t.bit_depth,
                         channels=t.channels,
+                        has_lyrics=t.lyrics is not None,
                     )
                     for t in ordered
                 ],
@@ -137,13 +137,6 @@ def _album_conditions(
     if year is not None:
         conditions.append(AlbumRow.date.like(f"{year:04d}%"))
     return conditions
-
-
-def _contains(column: Any, text: str) -> ColumnElement[bool]:
-    # Escape LIKE wildcards so a search for "%" or "_" matches those characters literally.
-    escaped = text.replace(LIKE_ESCAPE, LIKE_ESCAPE * 2)
-    escaped = escaped.replace("%", f"{LIKE_ESCAPE}%").replace("_", f"{LIKE_ESCAPE}_")
-    return cast("ColumnElement[bool]", column.ilike(f"%{escaped}%", escape=LIKE_ESCAPE))
 
 
 def _album_summaries(conditions: list[ColumnElement[bool]]) -> Select[*tuple[Any, ...]]:

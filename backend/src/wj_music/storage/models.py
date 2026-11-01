@@ -43,6 +43,7 @@ class TrackRow(Base):
     bit_depth: Mapped[int] = mapped_column(Integer)
     channels: Mapped[int] = mapped_column(Integer)
     cover_file: Mapped[str | None] = mapped_column(String)
+    synced_lyrics: Mapped[str | None] = mapped_column(Text)
 
 
 class ScannedFileRow(Base):
@@ -53,3 +54,5 @@ class ScannedFileRow(Base):
     size_bytes: Mapped[int] = mapped_column(Integer)
     mtime: Mapped[float] = mapped_column(Float)
     error: Mapped[str | None] = mapped_column(Text)
+    lyrics_size_bytes: Mapped[int | None] = mapped_column(Integer)
+    lyrics_mtime: Mapped[float | None] = mapped_column(Float)
