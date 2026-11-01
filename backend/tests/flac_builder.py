@@ -6,6 +6,8 @@ from collections.abc import Mapping, Sequence
 FLAC_MARKER = b"fLaC"
 BLOCK_STREAMINFO = 0
 BLOCK_VORBIS_COMMENT = 4
+BLOCK_PICTURE = 6
+PICTURE_TYPE_FRONT_COVER = 3
 
 
 def _block(block_type: int, body: bytes, *, last: bool) -> bytes:
@@ -38,22 +40,43 @@ def _vorbis_comment(tags: Mapping[str, Sequence[str]]) -> bytes:
     return body
 
 
+def _picture(data: bytes, mime_type: str) -> bytes:
+    mime = mime_type.encode()
+    return (
+        struct.pack(">I", PICTURE_TYPE_FRONT_COVER)
+        + struct.pack(">I", len(mime))
+        + mime
+        + struct.pack(">I", 0)  # empty description
+        + struct.pack(">IIII", 0, 0, 0, 0)  # width, height, colour depth, colour count
+        + struct.pack(">I", len(data))
+        + data
+    )
+
+
 def build_flac(
     *,
     tags: Mapping[str, Sequence[str]] | None = None,
+    picture: bytes | None = None,
+    picture_mime_type: str = "image/jpeg",
     sample_rate: int = 44100,
     channels: int = 2,
     bits_per_sample: int = 16,
     total_samples: int = 44100 * 180,
 ) -> bytes:
-    """Return a FLAC stream with STREAMINFO and Vorbis comments but no audio frames."""
+    """Return a FLAC stream with STREAMINFO and optional tags and cover, but no audio frames."""
     streaminfo = _streaminfo(
         sample_rate=sample_rate,
         channels=channels,
         bits_per_sample=bits_per_sample,
         total_samples=total_samples,
     )
-    blocks = [_block(BLOCK_STREAMINFO, streaminfo, last=tags is None)]
+    blocks: list[tuple[int, bytes]] = [(BLOCK_STREAMINFO, streaminfo)]
     if tags is not None:
-        blocks.append(_block(BLOCK_VORBIS_COMMENT, _vorbis_comment(tags), last=True))
-    return FLAC_MARKER + b"".join(blocks)
+        blocks.append((BLOCK_VORBIS_COMMENT, _vorbis_comment(tags)))
+    if picture is not None:
+        blocks.append((BLOCK_PICTURE, _picture(picture, picture_mime_type)))
+    encoded = [
+        _block(block_type, body, last=index == len(blocks) - 1)
+        for index, (block_type, body) in enumerate(blocks)
+    ]
+    return FLAC_MARKER + b"".join(encoded)

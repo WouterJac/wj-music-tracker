@@ -27,10 +27,17 @@ class AudioInfo:
 
 
 @dataclass(frozen=True)
+class Picture:
+    data: bytes
+    mime_type: str
+
+
+@dataclass(frozen=True)
 class FlacFile:
     path: Path
     tags: TrackTags
     audio: AudioInfo
+    picture: Picture | None = None
 
 
 @dataclass(frozen=True)

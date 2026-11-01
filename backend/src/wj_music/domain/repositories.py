@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Protocol
 
-from wj_music.domain.models import FlacFile, ScannedFile
+from wj_music.domain.models import FlacFile, Picture, ScannedFile
 
 
 class ScannedFileRepository(Protocol):
@@ -15,6 +15,14 @@ class ScannedFileRepository(Protocol):
 
 
 class TrackRepository(Protocol):
-    def save(self, flac: FlacFile) -> None: ...
+    def save(self, flac: FlacFile, cover_file: str | None = None) -> None: ...
 
     def delete(self, path: Path) -> None: ...
+
+    def prune_orphans(self) -> None: ...
+
+
+class CoverStore(Protocol):
+    def store(self, picture: Picture) -> str:
+        """Keep the picture and return the name it can be found under."""
+        ...

@@ -110,3 +110,18 @@ def test_table_section_must_be_a_table(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match=r"\[server\]"):
         load_settings(config, {})
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.20", "example.com", ""])
+def test_non_loopback_host_is_rejected(tmp_path: Path, host: str) -> None:
+    config = write_config(tmp_path / "config.local.toml", f'[server]\nhost = "{host}"\n')
+
+    with pytest.raises(ValueError, match="server.host"):
+        load_settings(config, {})
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])
+def test_loopback_host_is_accepted(tmp_path: Path, host: str) -> None:
+    config = write_config(tmp_path / "config.local.toml", f'[server]\nhost = "{host}"\n')
+
+    assert load_settings(config, {}).host == host

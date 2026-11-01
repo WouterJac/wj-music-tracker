@@ -131,3 +131,20 @@ def test_truncated_flac_raises_invalid_flac_error(tmp_path: Path) -> None:
 def test_missing_file_is_not_reported_as_invalid_flac(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         read_flac(tmp_path / "gone.flac")
+
+
+def test_reads_embedded_front_cover(tmp_path: Path) -> None:
+    cover = b"\xff\xd8\xff fake jpeg bytes"
+    path = write_flac(tmp_path / "covered.flac", build_flac(tags={"TITLE": ["Art"]}, picture=cover))
+
+    picture = read_flac(path).picture
+
+    assert picture is not None
+    assert picture.data == cover
+    assert picture.mime_type == "image/jpeg"
+
+
+def test_track_without_embedded_cover_has_no_picture(tmp_path: Path) -> None:
+    path = write_flac(tmp_path / "plain.flac", build_flac(tags={"TITLE": ["Plain"]}))
+
+    assert read_flac(path).picture is None
