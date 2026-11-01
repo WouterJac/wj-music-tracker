@@ -52,7 +52,10 @@ def load_settings(
     raw: dict[str, Any] = {}
     if config_file is not None and config_file.exists():
         with config_file.open("rb") as handle:
-            raw = tomllib.load(handle)
+            try:
+                raw = tomllib.load(handle)
+            except tomllib.TOMLDecodeError as exc:
+                raise ValueError(f"Invalid config file {config_file}: {exc}") from exc
 
     library = _table(raw, "library")
     data = _table(raw, "data")

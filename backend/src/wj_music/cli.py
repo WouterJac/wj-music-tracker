@@ -22,7 +22,11 @@ ConfigOption = Annotated[
 
 
 def _settings(config: Path | None) -> Settings:
-    return load_settings(config or find_config_file(Path.cwd()))
+    try:
+        return load_settings(config or find_config_file(Path.cwd()))
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(2) from None
 
 
 @app.command()

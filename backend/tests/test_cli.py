@@ -141,3 +141,14 @@ def test_serve_starts_uvicorn_on_the_configured_loopback_address(
     assert len(calls) == 1
     assert calls[0]["host"] == "127.0.0.1"
     assert calls[0]["port"] == 8000
+
+
+def test_invalid_config_file_gives_a_readable_error(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text('[library]\nmusic_path = "D:\\Music"\n', encoding="utf-8")
+
+    result = runner.invoke(app, ["scan", "--config", str(config)])
+
+    assert result.exit_code == 2
+    assert "config.toml" in result.output
+    assert "Traceback" not in result.output

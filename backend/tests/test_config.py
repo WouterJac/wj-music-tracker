@@ -147,3 +147,10 @@ class TestFindConfigFile:
         elsewhere = write_config(tmp_path / "elsewhere.toml", "")
 
         assert find_config_file(tmp_path, {"WJ_CONFIG": str(elsewhere)}) == elsewhere
+
+
+def test_invalid_toml_names_the_file_and_the_problem(tmp_path: Path) -> None:
+    config = write_config(tmp_path / "config.local.toml", '[library]\nmusic_path = "D:\\Music"\n')
+
+    with pytest.raises(ValueError, match=r"config\.local\.toml.*Unescaped"):
+        load_settings(config, {})
