@@ -1,5 +1,6 @@
 """Settings from built-in defaults, an optional TOML file and environment variables."""
 
+import ipaddress
 import os
 import tomllib
 from collections.abc import Mapping
@@ -46,12 +47,16 @@ def load_settings(
     if not isinstance(port, int) or not 1 <= port <= 65535:
         raise ValueError(f"server.port must be an integer from 1 to 65535, got {port!r}")
 
+    host = server.get("host", DEFAULT_HOST)
+    if not _is_loopback(host):
+        raise ValueError(f"server.host must be a loopback address (see API-AUTH.md), got {host!r}")
+
     music_path = environ.get(MUSIC_PATH_ENV) or library.get("music_path", "")
     directory = data.get("directory", "")
     return Settings(
         music_path=Path(music_path) if music_path else None,
         data_dir=Path(directory) if directory else default_data_dir(environ),
-        host=server.get("host", DEFAULT_HOST),
+        host=host,
         port=port,
     )
 
@@ -61,3 +66,14 @@ def _table(raw: dict[str, Any], key: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"[{key}] must be a table")
     return value
+
+
+def _is_loopback(host: object) -> bool:
+    if not isinstance(host, str):
+        return False
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
