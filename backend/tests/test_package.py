@@ -1,5 +1,7 @@
+import re
+
 from wj_music import __version__
 
 
 def test_package_exposes_version() -> None:
-    assert __version__ == "0.1.0"
+    assert re.fullmatch(r"\d+\.\d+\.\d+", __version__)

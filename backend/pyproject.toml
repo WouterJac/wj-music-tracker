@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wj-music"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Local web app to explore and analyse a FLAC music collection"
 requires-python = ">=3.11"
 dependencies = []
@@ -17,6 +17,9 @@ dev = [
     "mypy>=1.10",
 ]
 
+[tool.setuptools.dynamic]
+version = { attr = "wj_music.__version__" }
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -25,6 +28,7 @@ wj_music = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-ra --strict-markers"
 
 [tool.ruff]
