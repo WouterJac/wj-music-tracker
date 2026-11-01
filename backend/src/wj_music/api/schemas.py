@@ -15,6 +15,7 @@ from wj_music.domain.library import (
     TrackInfo,
 )
 from wj_music.domain.lyrics import parse_lrc
+from wj_music.domain.stats import Bucket, LibraryStats
 
 T = TypeVar("T")
 
@@ -206,3 +207,55 @@ def lyrics_page_out(page: Page[LyricsHit], limit: int, offset: int) -> PageOut[L
         for h in page.items
     ]
     return PageOut(items=items, total=page.total, limit=limit, offset=offset)
+
+
+class BucketOut(BaseModel):
+    label: str
+    count: int
+
+
+class TopArtistOut(BaseModel):
+    id: int
+    name: str
+    tracks: int
+    albums: int
+
+
+class StatsOut(BaseModel):
+    tracks: int
+    albums: int
+    artists: int
+    total_duration_seconds: float
+    hires_tracks: int
+    albums_by_decade: list[BucketOut]
+    albums_by_year: list[BucketOut]
+    tracks_by_format: list[BucketOut]
+    tracks_by_channels: list[BucketOut]
+    tracks_by_genre: list[BucketOut]
+    albums_by_track_count: list[BucketOut]
+    albums_by_length: list[BucketOut]
+    top_artists: list[TopArtistOut]
+
+
+def stats_out(stats: LibraryStats) -> StatsOut:
+    def buckets(items: list[Bucket]) -> list[BucketOut]:
+        return [BucketOut(label=b.label, count=b.count) for b in items]
+
+    return StatsOut(
+        tracks=stats.tracks,
+        albums=stats.albums,
+        artists=stats.artists,
+        total_duration_seconds=stats.total_duration_seconds,
+        hires_tracks=stats.hires_tracks,
+        albums_by_decade=buckets(stats.albums_by_decade),
+        albums_by_year=buckets(stats.albums_by_year),
+        tracks_by_format=buckets(stats.tracks_by_format),
+        tracks_by_channels=buckets(stats.tracks_by_channels),
+        tracks_by_genre=buckets(stats.tracks_by_genre),
+        albums_by_track_count=buckets(stats.albums_by_track_count),
+        albums_by_length=buckets(stats.albums_by_length),
+        top_artists=[
+            TopArtistOut(id=a.id, name=a.name, tracks=a.tracks, albums=a.albums)
+            for a in stats.top_artists
+        ],
+    )

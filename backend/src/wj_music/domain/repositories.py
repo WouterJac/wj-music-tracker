@@ -13,6 +13,7 @@ from wj_music.domain.library import (
     TrackInfo,
 )
 from wj_music.domain.models import FlacFile, Picture, ScannedFile
+from wj_music.domain.stats import LibraryStats
 
 
 class ScannedFileRepository(Protocol):
@@ -65,3 +66,7 @@ class TrackReader(Protocol):
     def get_track(self, track_id: int) -> TrackInfo | None: ...
 
     def search_lyrics(self, query: str, *, limit: int, offset: int = 0) -> Page[LyricsHit]: ...
+
+
+class StatsReader(Protocol):
+    def library_stats(self) -> LibraryStats: ...
