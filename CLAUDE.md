@@ -40,8 +40,7 @@ Phases 0 to 4 are built: foundation, library scanner, library browsing, lyrics, 
 **Gotchas**
 - The user's real `config.local.toml` has an invalid unescaped Windows path. It is the user's file: do not edit it. For browser checks use a scratch config outside the repo with `serve --config <file>` and forward slashes. A bad config file wins over `WJ_MUSIC_PATH`.
 - The cache DB lives in `%LOCALAPPDATA%\WJMusicTracker`. Migration 0003 clears it, so rescan after upgrading. The real library scans in about 14 s (198 tracks, 16 albums, 4 artists).
-- Working-tree files are CRLF. Python edit scripts must normalise `
-` before multi-line replaces and assert the old text is present. The bash tool mangles large heredocs and backslashes: write files with the Write tool and keep scripts in a file.
+- Working-tree files are CRLF. Python edit scripts must normalise `\r\n` to `\n` before multi-line replaces and assert the old text is present. The bash tool mangles large heredocs and backslashes: write files with the Write tool and keep scripts in a file.
 - `tsc -b` creates `frontend/tsconfig.tsbuildinfo`. Do not commit it.
 - Dev servers started for browser checks must be stopped afterwards (ports 5173 and 8000).
 
