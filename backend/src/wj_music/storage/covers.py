@@ -1,6 +1,8 @@
 """Cover-art cache in the data directory, keyed by content hash so duplicates share one file."""
 
 import hashlib
+import os
+import tempfile
 from pathlib import Path
 
 from wj_music.domain.models import Picture
@@ -20,5 +22,17 @@ class FileCoverStore:
         target = self._directory / name
         if not target.exists():
             self._directory.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(picture.data)
+            self._write_atomically(target, picture.data)
         return name
+
+    def _write_atomically(self, target: Path, data: bytes) -> None:
+        # A crash mid-write must not leave a truncated file under its final, hash-based name,
+        # because store() would later see it exists and never repair it.
+        handle, temp_name = tempfile.mkstemp(dir=self._directory, suffix=".tmp")
+        try:
+            with os.fdopen(handle, "wb") as temp_file:
+                temp_file.write(data)
+            os.replace(temp_name, target)
+        except BaseException:
+            Path(temp_name).unlink(missing_ok=True)
+            raise
