@@ -47,7 +47,7 @@ class SqlTrackRepository:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
 
-    def save(self, flac: FlacFile) -> None:
+    def save(self, flac: FlacFile, cover_file: str | None = None) -> None:
         tags = flac.tags
         with Session(self._engine) as session, session.begin():
             album_artist_id = _artist_id(session, tags.albumartist or tags.artist)
@@ -74,10 +74,24 @@ class SqlTrackRepository:
             row.sample_rate = flac.audio.sample_rate
             row.bit_depth = flac.audio.bit_depth
             row.channels = flac.audio.channels
+            row.cover_file = cover_file
 
     def delete(self, path: Path) -> None:
         with Session(self._engine) as session, session.begin():
             session.execute(delete(TrackRow).where(TrackRow.file_path == str(path)))
+
+    def prune_orphans(self) -> None:
+        # Albums and artists are derived from tags, so a rebuild must not keep ones no track uses.
+        with Session(self._engine) as session, session.begin():
+            used_albums = select(TrackRow.album_id).where(TrackRow.album_id.is_not(None))
+            session.execute(delete(AlbumRow).where(AlbumRow.id.not_in(used_albums)))
+            used_by_tracks = select(TrackRow.artist_id).where(TrackRow.artist_id.is_not(None))
+            used_by_albums = select(AlbumRow.artist_id).where(AlbumRow.artist_id.is_not(None))
+            session.execute(
+                delete(ArtistRow).where(
+                    ArtistRow.id.not_in(used_by_tracks), ArtistRow.id.not_in(used_by_albums)
+                )
+            )
 
 
 def _artist_id(session: Session, name: str | None) -> int | None:

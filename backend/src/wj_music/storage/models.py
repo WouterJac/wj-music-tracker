@@ -42,6 +42,7 @@ class TrackRow(Base):
     sample_rate: Mapped[int] = mapped_column(Integer)
     bit_depth: Mapped[int] = mapped_column(Integer)
     channels: Mapped[int] = mapped_column(Integer)
+    cover_file: Mapped[str | None] = mapped_column(String)
 
 
 class ScannedFileRow(Base):

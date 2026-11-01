@@ -1,13 +1,15 @@
 """Reads Vorbis comments and stream info from a FLAC file. Never writes."""
 
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from mutagen import MutagenError
 from mutagen.flac import FLAC, VCFLACDict
 
-from wj_music.domain.models import AudioInfo, FlacFile, TrackTags
+from wj_music.domain.models import AudioInfo, FlacFile, Picture, TrackTags
 from wj_music.scanner.errors import InvalidFlacError
+
+FRONT_COVER_TYPE = 3
 
 
 def read_flac(path: Path) -> FlacFile:
@@ -46,4 +48,12 @@ def read_flac(path: Path) -> FlacFile:
         channels=flac.info.channels,
         file_size_bytes=path.stat().st_size,
     )
-    return FlacFile(path=path, tags=tags, audio=audio)
+    return FlacFile(path=path, tags=tags, audio=audio, picture=_front_cover(flac.pictures))
+
+
+def _front_cover(pictures: list[Any]) -> Picture | None:
+    # Prefer the front cover; fall back to the first embedded picture of any kind.
+    if not pictures:
+        return None
+    chosen = next((p for p in pictures if p.type == FRONT_COVER_TYPE), pictures[0])
+    return Picture(data=chosen.data, mime_type=chosen.mime)
