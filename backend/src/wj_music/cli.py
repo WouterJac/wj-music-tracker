@@ -6,8 +6,7 @@ from typing import Annotated
 import typer
 import uvicorn
 
-from wj_music.api.app import create_app
-from wj_music.bootstrap import MusicPathNotConfiguredError, ScanOutcome, run_scan
+from wj_music.bootstrap import MusicPathNotConfiguredError, ScanOutcome, build_app, run_scan
 from wj_music.config import MUSIC_PATH_ENV, Settings, find_config_file, load_settings
 from wj_music.scanner.errors import MusicFolderNotFoundError
 
@@ -50,7 +49,7 @@ def scan(config: ConfigOption = None) -> None:
 def serve(config: ConfigOption = None) -> None:
     """Start the web API on the configured loopback address."""
     settings = _settings(config)
-    uvicorn.run(create_app(), host=settings.host, port=settings.port)
+    uvicorn.run(build_app(settings), host=settings.host, port=settings.port)
 
 
 def _summary(outcome: ScanOutcome) -> str:
