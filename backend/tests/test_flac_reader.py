@@ -3,8 +3,10 @@ from pathlib import Path
 import pytest
 
 from flac_builder import build_flac
+from wj_music.domain.lyrics import Lyrics
 from wj_music.scanner.errors import InvalidFlacError
 from wj_music.scanner.flac_reader import read_flac
+from wj_music.scanner.lyrics_file import MAX_SIDECAR_BYTES
 
 
 def write_flac(path: Path, data: bytes) -> Path:
@@ -148,3 +150,63 @@ def test_track_without_embedded_cover_has_no_picture(tmp_path: Path) -> None:
     path = write_flac(tmp_path / "plain.flac", build_flac(tags={"TITLE": ["Plain"]}))
 
     assert read_flac(path).picture is None
+
+
+class TestLyrics:
+    def test_lyrics_tag_is_read_as_plain_lyrics(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"LYRICS": ["la la la"]}))
+
+        lyrics = read_flac(path).lyrics
+
+        assert lyrics == Lyrics(plain="la la la", synced_lrc=None)
+
+    def test_unsynced_and_synced_tags_are_read(self, tmp_path: Path) -> None:
+        tags = {"UNSYNCEDLYRICS": ["words"], "SYNCEDLYRICS": ["[00:01.00]words"]}
+        path = write_flac(tmp_path / "a.flac", build_flac(tags=tags))
+
+        assert read_flac(path).lyrics == Lyrics(plain="words", synced_lrc="[00:01.00]words")
+
+    def test_tag_names_are_case_insensitive(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"UnsyncedLyrics": ["words"]}))
+
+        assert read_flac(path).lyrics == Lyrics(plain="words", synced_lrc=None)
+
+    def test_sidecar_lrc_next_to_the_file_is_read(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"TITLE": ["x"]}))
+        (tmp_path / "a.lrc").write_text("[00:01.00]from sidecar", encoding="utf-8")
+
+        assert read_flac(path).lyrics == Lyrics(
+            plain="from sidecar", synced_lrc="[00:01.00]from sidecar"
+        )
+
+    def test_sidecar_with_a_byte_order_mark_is_decoded(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"TITLE": ["x"]}))
+        (tmp_path / "a.lrc").write_bytes(b"\xef\xbb\xbfplain words")
+
+        assert read_flac(path).lyrics == Lyrics(plain="plain words", synced_lrc=None)
+
+    def test_sidecar_in_a_legacy_encoding_still_decodes(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"TITLE": ["x"]}))
+        (tmp_path / "a.lrc").write_bytes(b"caf\xe9")
+
+        assert read_flac(path).lyrics == Lyrics(plain="café", synced_lrc=None)
+
+    def test_oversized_sidecar_is_ignored(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"TITLE": ["x"]}))
+        (tmp_path / "a.lrc").write_bytes(b"x" * (MAX_SIDECAR_BYTES + 1))
+
+        assert read_flac(path).lyrics is None
+
+    def test_no_lyrics_anywhere_gives_none(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"TITLE": ["x"]}))
+
+        assert read_flac(path).lyrics is None
+
+    def test_reading_never_modifies_the_sidecar(self, tmp_path: Path) -> None:
+        path = write_flac(tmp_path / "a.flac", build_flac(tags={"TITLE": ["x"]}))
+        sidecar = tmp_path / "a.lrc"
+        sidecar.write_bytes(b"[00:01.00]keep me")
+
+        read_flac(path)
+
+        assert sidecar.read_bytes() == b"[00:01.00]keep me"

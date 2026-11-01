@@ -1,3 +1,4 @@
+import sqlite3
 from pathlib import Path
 
 from sqlalchemy import create_engine, inspect
@@ -60,3 +61,43 @@ def test_downgrade_to_first_revision_drops_cover_file_but_keeps_tracks(db_path: 
     columns = column_names(db_path, "tracks")
     assert "cover_file" not in columns
     assert "file_path" in columns
+
+
+def test_head_adds_lyrics_columns(db_path: Path) -> None:
+    upgrade_database(db_path)
+
+    assert "synced_lyrics" in column_names(db_path, "tracks")
+    assert {"lyrics_size_bytes", "lyrics_mtime"} <= column_names(db_path, "scanned_files")
+
+
+def test_downgrade_to_0002_drops_the_lyrics_columns(db_path: Path) -> None:
+    upgrade_database(db_path)
+
+    downgrade_database(db_path, "0002")
+
+    assert "synced_lyrics" not in column_names(db_path, "tracks")
+    assert "lyrics_mtime" not in column_names(db_path, "scanned_files")
+    assert "cover_file" in column_names(db_path, "tracks")
+
+
+def test_upgrading_to_0003_clears_the_cache_so_the_next_scan_rebuilds_it(db_path: Path) -> None:
+    upgrade_database(db_path, "0002")
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("INSERT INTO artists (id, name) VALUES (1, 'Band')")
+        conn.execute("INSERT INTO albums (id, title, artist_id) VALUES (1, 'Album', 1)")
+        conn.execute(
+            "INSERT INTO tracks (file_path, album_id, artist_id, duration_seconds, sample_rate,"
+            " bit_depth, channels) VALUES ('a.flac', 1, 1, 1.0, 44100, 16, 2)"
+        )
+        conn.execute(
+            "INSERT INTO scanned_files (path, size_bytes, mtime) VALUES ('a.flac', 1, 1.0)"
+        )
+
+    upgrade_database(db_path)
+
+    with sqlite3.connect(db_path) as conn:
+        counts = [
+            conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in ("artists", "albums", "tracks", "scanned_files")
+        ]
+    assert counts == [0, 0, 0, 0]
