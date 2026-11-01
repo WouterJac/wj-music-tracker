@@ -13,7 +13,11 @@ dependencies = [
     "alembic>=1.13",
     "mutagen>=1.47",
     "uvicorn>=0.30",
+    "typer>=0.12",
 ]
+
+[project.scripts]
+wj-music = "wj_music.cli:app"
 
 [project.optional-dependencies]
 dev = [
