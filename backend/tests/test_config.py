@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from wj_music.config import DEFAULT_HOST, DEFAULT_PORT, load_settings
+from wj_music.config import DEFAULT_HOST, DEFAULT_PORT, find_config_file, load_settings
 
 
 def write_config(path: Path, text: str) -> Path:
@@ -125,3 +125,32 @@ def test_loopback_host_is_accepted(tmp_path: Path, host: str) -> None:
     config = write_config(tmp_path / "config.local.toml", f'[server]\nhost = "{host}"\n')
 
     assert load_settings(config, {}).host == host
+
+
+class TestFindConfigFile:
+    def test_finds_config_in_the_start_folder(self, tmp_path: Path) -> None:
+        config = write_config(tmp_path / "config.local.toml", "")
+
+        assert find_config_file(tmp_path, {}) == config
+
+    def test_walks_up_to_a_parent_folder(self, tmp_path: Path) -> None:
+        config = write_config(tmp_path / "config.local.toml", "")
+        nested = tmp_path / "backend" / "src"
+        nested.mkdir(parents=True)
+
+        assert find_config_file(nested, {}) == config
+
+    def test_returns_none_when_no_config_exists(self, tmp_path: Path) -> None:
+        assert find_config_file(tmp_path, {}) is None
+
+    def test_environment_variable_names_the_file(self, tmp_path: Path) -> None:
+        elsewhere = write_config(tmp_path / "elsewhere.toml", "")
+
+        assert find_config_file(tmp_path, {"WJ_CONFIG": str(elsewhere)}) == elsewhere
+
+
+def test_invalid_toml_names_the_file_and_the_problem(tmp_path: Path) -> None:
+    config = write_config(tmp_path / "config.local.toml", '[library]\nmusic_path = "D:\\Music"\n')
+
+    with pytest.raises(ValueError, match=r"config\.local\.toml.*Unescaped"):
+        load_settings(config, {})

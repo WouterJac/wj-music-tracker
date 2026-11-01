@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 MUSIC_PATH_ENV = "WJ_MUSIC_PATH"
+CONFIG_ENV = "WJ_CONFIG"
+CONFIG_FILE_NAME = "config.local.toml"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
 DATA_DIR_NAME = "WJMusicTracker"
@@ -28,6 +30,19 @@ def default_data_dir(env: Mapping[str, str]) -> Path:
     return base / DATA_DIR_NAME
 
 
+def find_config_file(start: Path, env: Mapping[str, str] | None = None) -> Path | None:
+    """Locate the config file: WJ_CONFIG, else config.local.toml in start or a parent folder."""
+    environ = os.environ if env is None else env
+    explicit = environ.get(CONFIG_ENV)
+    if explicit:
+        return Path(explicit)
+    for folder in (start, *start.parents):
+        candidate = folder / CONFIG_FILE_NAME
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def load_settings(
     config_file: Path | None = None,
     env: Mapping[str, str] | None = None,
@@ -37,7 +52,10 @@ def load_settings(
     raw: dict[str, Any] = {}
     if config_file is not None and config_file.exists():
         with config_file.open("rb") as handle:
-            raw = tomllib.load(handle)
+            try:
+                raw = tomllib.load(handle)
+            except tomllib.TOMLDecodeError as exc:
+                raise ValueError(f"Invalid config file {config_file}: {exc}") from exc
 
     library = _table(raw, "library")
     data = _table(raw, "data")

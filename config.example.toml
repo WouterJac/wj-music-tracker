@@ -4,6 +4,7 @@
 [library]
 # Folder with your FLAC files. The app only reads from it.
 # Required before scanning. Set it here or with the WJ_MUSIC_PATH environment variable.
+# On Windows use single quotes (music_path = 'D:\Music') or double the backslashes.
 music_path = ""
 
 [data]

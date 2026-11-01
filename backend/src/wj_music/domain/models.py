@@ -46,3 +46,10 @@ class ScannedFile:
     size_bytes: int
     mtime: float
     error: str | None = None
+
+
+@dataclass(frozen=True)
+class LibraryTotals:
+    tracks: int
+    albums: int
+    artists: int
