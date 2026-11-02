@@ -55,6 +55,12 @@ class SqlLibraryReader:
         with Session(self._engine) as session:
             return [_album_summary(row) for row in session.execute(statement)]
 
+    def albums_by_ids(self, album_ids: list[int]) -> list[AlbumSummary]:
+        with Session(self._engine) as session:
+            rows = session.execute(_album_summaries([AlbumRow.id.in_(album_ids)]))
+            by_id = {summary.id: summary for summary in map(_album_summary, rows)}
+        return [by_id[i] for i in album_ids if i in by_id]
+
     def list_genres(self) -> list[GenreCount]:
         with Session(self._engine) as session:
             rows = session.execute(

@@ -378,6 +378,30 @@ export async function fetchFacts(): Promise<Fact[]> {
   return (await getJson("/api/facts", isFactList)).items;
 }
 
+export interface SimilarAlbum {
+  album: Album;
+  score: number;
+  reasons: string[];
+}
+
+function isSimilarList(value: unknown): value is SimilarAlbum[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        isAlbum(item.album) &&
+        typeof item.score === "number" &&
+        Array.isArray(item.reasons) &&
+        item.reasons.every((reason) => typeof reason === "string"),
+    )
+  );
+}
+
+export function fetchSimilarAlbums(id: number): Promise<SimilarAlbum[]> {
+  return getJson(`/api/albums/${String(id)}/similar`, isSimilarList);
+}
+
 export interface GenreCount {
   name: string;
   album_count: number;
@@ -401,6 +425,72 @@ export interface RandomAlbumFilters {
   count: number;
   decade?: number;
   genre?: string;
+}
+
+export function fetchRediscoverAlbums(count: number): Promise<Album[]> {
+  return getJson(withParams("/api/albums/rediscover", { count }), isAlbumList);
+}
+
+/** Tells the backend this album was looked at, so rediscover can leave it for later. */
+export async function recordAlbumView(id: number): Promise<void> {
+  const response = await fetch(`/api/albums/${String(id)}/view`, { method: "POST" });
+  if (!response.ok) {
+    throw new Error(
+      `Recording a view of album ${String(id)} responded with ${String(response.status)}`,
+    );
+  }
+}
+
+export interface ScanSummary {
+  added: number;
+  changed: number;
+  removed: number;
+  unchanged: number;
+  errors: number;
+  tracks: number;
+  albums: number;
+  artists: number;
+}
+
+const SCAN_FIELDS = [
+  "added",
+  "changed",
+  "removed",
+  "unchanged",
+  "errors",
+  "tracks",
+  "albums",
+  "artists",
+] as const;
+
+function isScanSummary(value: unknown): value is ScanSummary {
+  return isRecord(value) && SCAN_FIELDS.every((field) => typeof value[field] === "number");
+}
+
+/** The reason the server gives for refusing a request, if it gave one. */
+async function errorDetail(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    return isRecord(body) && typeof body.detail === "string" ? body.detail : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Scans the music folder again and returns what changed. Can take a while on a large library. */
+export async function runScan(): Promise<ScanSummary> {
+  const response = await fetch("/api/scan", { method: "POST" });
+  if (!response.ok) {
+    // 409 and 422 carry a message meant for the user; anything else is a server fault.
+    const detail =
+      response.status === 409 || response.status === 422 ? await errorDetail(response) : null;
+    throw new Error(detail ?? "Could not refresh the library. Check that the backend is running.");
+  }
+  const body: unknown = await response.json();
+  if (!isScanSummary(body)) {
+    throw new Error("/api/scan returned an unexpected body");
+  }
+  return body;
 }
 
 export function fetchRandomAlbums(filters: RandomAlbumFilters): Promise<Album[]> {

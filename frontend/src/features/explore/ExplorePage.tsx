@@ -1,18 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { fetchGenres, fetchRandomAlbums, fetchYears } from "../../api/library";
+import {
+  fetchGenres,
+  fetchRandomAlbums,
+  fetchRediscoverAlbums,
+  fetchYears,
+} from "../../api/library";
 import { QueryState } from "../../components/QueryState";
 import { Skeleton } from "../../components/Skeleton";
 import { AlbumCard } from "../albums/AlbumCard";
 
 const RANDOM_COUNT = 6;
+const REDISCOVER_COUNT = 6;
 
 export function ExplorePage() {
   return (
     <>
       <h1>Explore</h1>
       <RandomPicks />
+      <Rediscover />
       <Decades />
       <Genres />
     </>
@@ -58,6 +66,40 @@ function RandomPicks() {
           </>
         )}
       </QueryState>
+    </section>
+  );
+}
+
+/** Albums not opened lately. A bonus, so a failure or an empty answer leaves it out. */
+function Rediscover() {
+  const rediscover = useQuery({
+    queryKey: ["rediscover"],
+    queryFn: () => fetchRediscoverAlbums(REDISCOVER_COUNT),
+  });
+  const { error } = rediscover;
+  useEffect(() => {
+    if (error) console.error(error);
+  }, [error]);
+
+  if (rediscover.isPending) {
+    return (
+      <Skeleton
+        label="Loading albums to rediscover"
+        className="album-grid"
+        count={REDISCOVER_COUNT}
+      />
+    );
+  }
+  if (rediscover.isError || rediscover.data.length === 0) return null;
+  return (
+    <section aria-labelledby="rediscover-heading">
+      <h2 id="rediscover-heading">Rediscover</h2>
+      <p>Albums you have not opened in a while.</p>
+      <ul className="album-grid">
+        {rediscover.data.map((album) => (
+          <AlbumCard key={album.id} album={album} />
+        ))}
+      </ul>
     </section>
   );
 }

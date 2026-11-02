@@ -9,7 +9,7 @@ A local web app that analyses a FLAC music collection: browse albums and artists
 1. **The music folder is read-only.** The app never writes into the music folder. Set the path in `config.local.toml` or with `WJ_MUSIC_PATH`. The repo never contains a personal path. Write-back is a later opt-in feature (SCRUM-16) and is not allowed without that work.
 2. **Public repository.** Never commit audio files (`*.flac` and others), databases, cover caches, `config.local.toml`, or personal paths. Check `git status` before every commit. Tests use generated FLAC data only.
 3. **Everything is tracked in Jira** (project SCRUM, "WJ Music Tracker" on walterjacobs.atlassian.net). Move a story to In Progress when started and Done when its acceptance criteria and tests pass.
-4. **Derived data is rebuildable.** The SQLite DB is a cache built from scanning. Never add something that only exists in the DB without a plan to keep it on rebuild.
+4. **Derived data is rebuildable.** The SQLite DB is a cache built from scanning. Never add something that only exists in the DB without a plan to keep it on rebuild. Data that cannot be rebuilt (so far only album view history) lives in its own `user.db`, which scans and cache resets never touch.
 5. **Offline first.** No calls to internet services until phase 8 (SCRUM-13) is started and approved.
 
 ## Read next
@@ -22,15 +22,15 @@ A local web app that analyses a FLAC music collection: browse albums and artists
 - [GIT-WORKFLOW.md](GIT-WORKFLOW.md): branches, commits, shipping.
 
 ## Current status
-Phases 0 to 5 are built: foundation, library scanner, library browsing, lyrics, statistics dashboard, interesting facts. Nothing past phase 5 exists yet. The next phase is the next open epic in Jira (SCRUM-5 to SCRUM-16). Ask the user before starting it.
+Phases 0 to 7 are built: foundation, library scanner, library browsing, lyrics, statistics dashboard, interesting facts, explore (random albums, browse by decade and genre, rediscover), offline recommendations (similar albums). Nothing past phase 7 exists yet. Rediscover remembers album views in `user.db` (SCRUM-41, SCRUM-42). The next phase is the next open epic in Jira (SCRUM-5 to SCRUM-16). Ask the user before starting it.
 
-**Git state (check with `git log` and `gh pr list` first, this may be stale).** PRs #7 to #14 were merged into their parent branches instead of `main`, so `main` only had #6. PR #16 (branch `SCRUM-34-stats-ui`, base `main`) carries phases 2 to 4 and the phase 5 PR is stacked on it (branch `SCRUM-36-facts-ui`, base `SCRUM-34-stats-ui`). Both wait for the user to review and merge, #16 first; if its branch is gone after merging, retarget the stacked PR to `main`. Until then, start new branches from `SCRUM-36-facts-ui`. After it is merged, branch from `main`. One branch per story. Never merge or approve PRs yourself: the user reviews and merges.
+**Git state (check with `git log` and `gh pr list` first, this may be stale).** `main` has phases 0 to 5 (PRs #16 and #17 are merged). The later work is a stack of PRs, each based on the previous branch, waiting for the user to review and merge in order: phase 6 `SCRUM-38-explore-ui` (#19, base `main`), phase 7 `SCRUM-40-similar-ui` (#20), rediscover API `SCRUM-41-rediscover-api`, rediscover UI `SCRUM-42-rediscover-ui`. If a base branch is gone after merging, retarget the next PR to `main`. Until they are merged, start new branches from `SCRUM-42-rediscover-ui`; after that, from `main`. One branch per story. Never merge or approve PRs yourself: the user reviews and merges.
 
 **What exists**
 - Backend (`backend/src/wj_music/`): `domain`, `scanner`, `storage` (SQLite, Alembic migrations 0001 to 0003), `services`, `api`, composition root `bootstrap.py`, Typer CLI `wj-music scan|serve`.
-- API: `/health`, `/api/albums`, `/api/albums/{id}`, `/api/albums/{id}/cover`, `/api/artists`, `/api/artists/{id}`, `/api/years`, `/api/tracks/{id}`, `/api/lyrics/search`, `/api/stats`, `/api/facts`.
-- Frontend (`frontend/src/`): pages Albums, Artists, album/artist/track detail, Lyrics search, Statistics (`/stats`), Facts (`/facts`). Shared pieces: `QueryState` (loading/error/empty/not-found), `Skeleton`, `Pagination`, `SearchBox`, `BarChart`. Facts and stats follow the pattern: pure rules in `domain/`, a reader that fetches rows, a thin service and route.
-- Last verified: backend 301 tests, frontend 121 tests, ruff, mypy strict, eslint, tsc, prettier, build all clean.
+- API: `/health`, `/api/albums`, `/api/albums/{id}`, `/api/albums/{id}/cover`, `/api/artists`, `/api/artists/{id}`, `/api/years`, `/api/tracks/{id}`, `/api/lyrics/search`, `/api/stats`, `/api/facts`, `/api/genres`, `/api/albums/random`, `/api/albums/rediscover`, `POST /api/albums/{id}/view`, `/api/albums/{id}/similar`, `POST /api/scan` (runs a scan, one at a time); `/api/albums` also filters by `decade` and `genre`.
+- Frontend (`frontend/src/`): pages Albums, Artists, album/artist/track detail, Lyrics search, Statistics (`/stats`), Facts (`/facts`), Explore (`/explore`, with a Rediscover section); the album page has a "You might also like" section. A footer "Refresh library" button on every page runs a scan and reloads what is on screen (SCRUM-43). Shared pieces: `QueryState` (loading/error/empty/not-found), `Skeleton`, `Pagination`, `SearchBox`, `BarChart`. Facts and stats follow the pattern: pure rules in `domain/`, a reader that fetches rows, a thin service and route.
+- Last verified: backend 374 tests, frontend 151 tests, ruff, mypy strict, eslint, tsc, prettier, build all clean.
 
 **Run it (Windows PowerShell)**
 - Backend: `cd backend`, then `.venv\Scripts\wj-music scan`, then `.venv\Scripts\wj-music serve` (port 8000).

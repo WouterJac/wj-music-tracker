@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { HealthStatus } from "../features/health/HealthStatus";
+import { RefreshLibraryButton } from "../features/scan/RefreshLibraryButton";
 
 export function Layout() {
   return (
@@ -22,6 +23,7 @@ export function Layout() {
         <Outlet />
       </main>
       <footer className="site-footer">
+        <RefreshLibraryButton />
         <HealthStatus />
       </footer>
     </>

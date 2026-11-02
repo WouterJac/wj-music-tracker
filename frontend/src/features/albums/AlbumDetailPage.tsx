@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { fetchAlbum, type AlbumDetail, type Track } from "../../api/library";
+import { fetchAlbum, recordAlbumView, type AlbumDetail, type Track } from "../../api/library";
 import { ItemNotFound } from "../../components/ItemNotFound";
 import { QueryState } from "../../components/QueryState";
 import { Skeleton } from "../../components/Skeleton";
 import { formatChannels, formatQuality, formatTotalDuration } from "../../lib/format";
 import { toPositiveInt } from "../../lib/params";
 import { coverAlt } from "./AlbumCard";
+import { SimilarAlbums } from "./SimilarAlbums";
 import { TrackList } from "./TrackList";
 
 const notFound = <ItemNotFound noun="Album" backTo="/albums" backLabel="Back to albums" />;
@@ -54,6 +56,12 @@ function AlbumDetailView({ id }: { id: number }) {
 }
 
 function AlbumContent({ album }: { album: AlbumDetail }) {
+  // Only feeds rediscover, so a failure is logged and never shown.
+  useEffect(() => {
+    recordAlbumView(album.id).catch((error: unknown) => {
+      console.error(error);
+    });
+  }, [album.id]);
   const meta = [
     album.year === null ? null : String(album.year),
     `${String(album.track_count)} ${album.track_count === 1 ? "track" : "tracks"}`,
@@ -86,6 +94,9 @@ function AlbumContent({ album }: { album: AlbumDetail }) {
         ) : (
           <TrackList tracks={album.tracks} />
         )}
+      </div>
+      <div className="album-similar">
+        <SimilarAlbums albumId={album.id} />
       </div>
     </article>
   );

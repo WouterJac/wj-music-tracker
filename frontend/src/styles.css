@@ -102,6 +102,7 @@ h1 {
 
 .site-header nav {
   display: flex;
+  flex-wrap: wrap;
 }
 
 .site-header nav a {
@@ -135,6 +136,22 @@ main {
 .site-footer p {
   display: inline;
   margin: 0 12px 0 0;
+}
+
+.refresh-library {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.refresh-library p {
+  margin: 0;
+}
+
+.refresh-library [role="alert"] {
+  color: var(--color-danger);
 }
 
 /* Controls */
@@ -683,4 +700,21 @@ a.bar-row:hover .bar-label {
 .chip-count {
   color: var(--color-muted);
   font-size: 0.875rem;
+}
+
+/* Similar albums */
+.album-similar {
+  grid-column: 1 / -1;
+}
+
+.reasons {
+  margin: 4px 0 0;
+  padding: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  list-style: none;
+}
+
+.album-grid + button {
+  margin-top: 16px;
 }

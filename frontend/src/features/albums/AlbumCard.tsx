@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import type { Album } from "../../api/library";
@@ -8,7 +9,8 @@ export function coverAlt(album: Pick<Album, "title" | "artist_name">): string {
     : `Cover of ${album.title}`;
 }
 
-export function AlbumCard({ album }: { album: Album }) {
+/** A grid card for an album. `note` is extra content shown under the link, such as reasons. */
+export function AlbumCard({ album, note }: { album: Album; note?: ReactNode }) {
   const meta = [album.artist_name, album.year].filter((part) => part !== null).join(" · ");
   return (
     <li>
@@ -32,6 +34,7 @@ export function AlbumCard({ album }: { album: Album }) {
           {meta}
         </span>
       </Link>
+      {note}
     </li>
   );
 }
