@@ -2,7 +2,7 @@
 
 A local web app to explore and analyse a FLAC music collection: albums, artists, statistics, metadata, lyrics and interesting facts. Recommendations follow in later phases.
 
-**Status:** Phase 4 (statistics) is done: scan your library, then browse albums and artists, read embedded or `.lrc` lyrics, search them, and see statistics (decades, formats, hi-res share, top artists). Planning and tracking live in Jira (project SCRUM).
+**Status:** Phase 5 (interesting facts) is done, and phase 4 (statistics) before it: scan your library, then browse albums and artists, read embedded or `.lrc` lyrics, search them, see statistics (decades, formats, hi-res share, top artists), and read facts about your collection. Planning and tracking live in Jira (project SCRUM).
 
 ## Principles
 - Your music stays on your machine. The app only reads your FLAC files.

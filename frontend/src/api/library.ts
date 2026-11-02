@@ -346,6 +346,34 @@ export function fetchStats(): Promise<LibraryStats> {
   return getJson("/api/stats", isLibraryStats);
 }
 
+export interface Fact {
+  key: string;
+  title: string;
+  text: string;
+  link: { kind: "album" | "artist" | "track"; id: number };
+}
+
+function isFactList(value: unknown): value is { items: Fact[] } {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.items) &&
+    value.items.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.key === "string" &&
+        typeof item.title === "string" &&
+        typeof item.text === "string" &&
+        isRecord(item.link) &&
+        (item.link.kind === "album" || item.link.kind === "artist" || item.link.kind === "track") &&
+        typeof item.link.id === "number",
+    )
+  );
+}
+
+export async function fetchFacts(): Promise<Fact[]> {
+  return (await getJson("/api/facts", isFactList)).items;
+}
+
 export function fetchYears(): Promise<number[]> {
   return getJson("/api/years", isYearList);
 }
