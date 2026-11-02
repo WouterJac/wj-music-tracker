@@ -1,5 +1,6 @@
 """Repository contracts the services depend on. Implementations live in storage."""
 
+from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -15,6 +16,7 @@ from wj_music.domain.library import (
     TrackInfo,
 )
 from wj_music.domain.models import FlacFile, Picture, ScannedFile
+from wj_music.domain.rediscover import AlbumKey
 from wj_music.domain.similar import AlbumProfile
 from wj_music.domain.stats import LibraryStats
 
@@ -87,6 +89,12 @@ class StatsReader(Protocol):
 
 class FactsReader(Protocol):
     def facts(self) -> list[Fact]: ...
+
+
+class ViewHistory(Protocol):
+    def record(self, key: AlbumKey, when: datetime) -> None: ...
+
+    def last_viewed(self) -> dict[AlbumKey, datetime]: ...
 
 
 class SimilarReader(Protocol):

@@ -7,12 +7,14 @@ from fastapi import FastAPI
 from wj_music import __version__
 from wj_music.api.facts_routes import facts_router
 from wj_music.api.library_routes import library_router
+from wj_music.api.rediscover_routes import rediscover_router
 from wj_music.api.schemas import HealthResponse
 from wj_music.api.similar_routes import similar_router
 from wj_music.api.stats_routes import stats_router
 from wj_music.api.track_routes import track_router
 from wj_music.services.facts import FactsService
 from wj_music.services.library import LibraryService
+from wj_music.services.rediscover import RediscoverService
 from wj_music.services.similar import SimilarService
 from wj_music.services.stats import StatsService
 from wj_music.services.tracks import TrackService
@@ -25,6 +27,7 @@ def create_app(
     stats: StatsService | None = None,
     facts: FactsService | None = None,
     similar: SimilarService | None = None,
+    rediscover: RediscoverService | None = None,
 ) -> FastAPI:
     app = FastAPI(title="WJ Music Tracker", version=__version__)
 
@@ -32,6 +35,9 @@ def create_app(
     def health() -> HealthResponse:
         return HealthResponse(status="ok", version=__version__)
 
+    # Before the library router, whose /albums/{album_id} would read "rediscover" as an id.
+    if rediscover is not None:
+        app.include_router(rediscover_router(rediscover))
     if library is not None:
         app.include_router(library_router(library, covers_dir))
     if tracks is not None:

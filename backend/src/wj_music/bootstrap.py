@@ -11,6 +11,7 @@ from wj_music.domain.models import LibraryTotals
 from wj_music.scanner.scan import ScanReport, scan_library
 from wj_music.services.facts import FactsService
 from wj_music.services.library import LibraryService
+from wj_music.services.rediscover import RediscoverService
 from wj_music.services.similar import SimilarService
 from wj_music.services.stats import StatsService
 from wj_music.services.tracks import TrackService
@@ -24,8 +25,10 @@ from wj_music.storage.similar_reader import SqlSimilarReader
 from wj_music.storage.stats_reader import SqlStatsReader
 from wj_music.storage.totals import count_library
 from wj_music.storage.track_reader import SqlTrackReader
+from wj_music.storage.view_history import SqlViewHistory
 
 DATABASE_NAME = "library.db"
+USER_DATABASE_NAME = "user.db"
 COVERS_DIR_NAME = "covers"
 
 
@@ -68,11 +71,14 @@ def build_app(settings: Settings) -> FastAPI:
     upgrade_database(db_path)
     engine = create_db_engine(db_path)
     library_reader = SqlLibraryReader(engine)
+    # View history is not a cache, so it has its own file that a rescan or reset leaves alone.
+    user_engine = create_db_engine(settings.data_dir / USER_DATABASE_NAME)
     return create_app(
         library=LibraryService(library_reader),
         tracks=TrackService(SqlTrackReader(engine)),
         stats=StatsService(SqlStatsReader(engine)),
         facts=FactsService(SqlFactsReader(engine)),
         similar=SimilarService(SqlSimilarReader(engine), library_reader),
+        rediscover=RediscoverService(library_reader, SqlViewHistory(user_engine)),
         covers_dir=settings.data_dir / COVERS_DIR_NAME,
     )
