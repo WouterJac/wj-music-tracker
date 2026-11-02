@@ -427,6 +427,20 @@ export interface RandomAlbumFilters {
   genre?: string;
 }
 
+export function fetchRediscoverAlbums(count: number): Promise<Album[]> {
+  return getJson(withParams("/api/albums/rediscover", { count }), isAlbumList);
+}
+
+/** Tells the backend this album was looked at, so rediscover can leave it for later. */
+export async function recordAlbumView(id: number): Promise<void> {
+  const response = await fetch(`/api/albums/${String(id)}/view`, { method: "POST" });
+  if (!response.ok) {
+    throw new Error(
+      `Recording a view of album ${String(id)} responded with ${String(response.status)}`,
+    );
+  }
+}
+
 export function fetchRandomAlbums(filters: RandomAlbumFilters): Promise<Album[]> {
   const url = withParams("/api/albums/random", {
     count: filters.count,

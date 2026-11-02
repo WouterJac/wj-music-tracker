@@ -17,14 +17,16 @@ function toUrl(input: string | URL | Request): URL {
  * /health always answers ok so the layout's status line never needs its own setup.
  */
 export function mockApi(handler: (url: URL) => unknown) {
-  const fetchMock = vi.fn((input: string | URL | Request) => {
-    const url = toUrl(input);
-    if (url.pathname === "/health") {
-      return Promise.resolve(jsonResponse({ status: "ok", version: "0.1.0" }));
-    }
-    const result = handler(url);
-    return Promise.resolve(result instanceof Response ? result : jsonResponse(result));
-  });
+  const fetchMock = vi.fn<(input: string | URL | Request, init?: RequestInit) => Promise<Response>>(
+    (input) => {
+      const url = toUrl(input);
+      if (url.pathname === "/health") {
+        return Promise.resolve(jsonResponse({ status: "ok", version: "0.1.0" }));
+      }
+      const result = handler(url);
+      return Promise.resolve(result instanceof Response ? result : jsonResponse(result));
+    },
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }

@@ -12,9 +12,13 @@ const genres = [
   { name: "Ambient", album_count: 1 },
 ];
 
-function exploreApi(random: () => Album[] = () => [low, heroes]) {
+function exploreApi(
+  random: () => Album[] = () => [low, heroes],
+  rediscover: () => Album[] = () => [],
+) {
   return mockApi((url) => {
     if (url.pathname === "/api/albums/random") return random();
+    if (url.pathname === "/api/albums/rediscover") return rediscover();
     if (url.pathname === "/api/genres") return genres;
     if (url.pathname === "/api/years") return [2023, 2016, 2009, 1977];
     throw new Error(`unexpected request ${url.pathname}`);
@@ -63,6 +67,56 @@ describe("ExplorePage", () => {
     expect(await screen.findByRole("link", { name: /Heroes/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Low/ })).not.toBeInTheDocument();
     expect(requestsTo(fetchMock, "/api/albums/random")).toHaveLength(2);
+  });
+
+  it("suggests albums to rediscover", async () => {
+    const fetchMock = exploreApi(
+      () => [low],
+      () => [heroes],
+    );
+    renderAt("/explore");
+
+    const section = await screen.findByRole("region", { name: "Rediscover" });
+    expect(await within(section).findByRole("link", { name: /Heroes/ })).toHaveAttribute(
+      "href",
+      "/albums/2",
+    );
+    expect(requestsTo(fetchMock, "/api/albums/rediscover")[0]?.searchParams.get("count")).toBe("6");
+  });
+
+  it("shows a placeholder while the rediscover albums load", () => {
+    mockApi(() => new Promise(() => {}));
+    renderAt("/explore");
+
+    expect(
+      screen.getByRole("status", { name: "Loading albums to rediscover" }),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves rediscover out when there is nothing to suggest", async () => {
+    exploreApi();
+    renderAt("/explore");
+
+    await screen.findByRole("region", { name: "Browse by genre" });
+    expect(screen.queryByRole("region", { name: "Rediscover" })).not.toBeInTheDocument();
+  });
+
+  it("leaves rediscover out, without an error, when it fails", async () => {
+    mockApi((url) => {
+      if (url.pathname === "/api/albums/rediscover") return jsonResponse({}, 500);
+      if (url.pathname === "/api/albums/random") return [low];
+      return url.pathname === "/api/genres" ? genres : [1977];
+    });
+    renderAt("/explore");
+
+    await screen.findByRole("region", { name: "Browse by genre" });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("status", { name: "Loading albums to rediscover" }),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.queryByRole("region", { name: "Rediscover" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("browses by decade, newest first, using the years the library has", async () => {

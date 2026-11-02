@@ -35,6 +35,7 @@ Dependencies point inward only.
 ## Data directory
 Outside the repo and the music folder. Default `%LOCALAPPDATA%\WJMusicTracker\` (configurable):
 - `library.db`: SQLite database (rebuildable cache).
+- `user.db`: SQLite database with album view history for rediscover. Not a cache: scans and cache resets never touch it.
 - `covers/`: extracted cover art, named by content hash.
 - Later: `enrichment/` for cached online data (phase 8).
 
