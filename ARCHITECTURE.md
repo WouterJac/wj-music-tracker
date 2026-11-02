@@ -41,7 +41,7 @@ Outside the repo and the music folder. Default `%LOCALAPPDATA%\WJMusicTracker\` 
 
 ## Key decisions
 Each decision gets an ADR in `docs/` (for example `docs/0001-python-react-stack.md`). Decisions so far:
-- Local-only app, no auth, bound to localhost (see [API-AUTH.md](API-AUTH.md)).
+- Local-only by default: bound to localhost with no auth. Phone access is opt-in with token auth (see [API-AUTH.md](API-AUTH.md)).
 - Python backend and React PWA frontend.
 - Read-only access to the music folder.
 - Rebuildable SQLite cache.

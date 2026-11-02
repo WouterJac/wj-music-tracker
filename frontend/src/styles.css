@@ -747,3 +747,31 @@ a.bar-row:hover .bar-label {
 .album-grid + button {
   margin-top: 16px;
 }
+
+/* Phones: keep content clear of notches and the home bar, and make taps immediate. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+a,
+button,
+input,
+select {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-header,
+.site-footer,
+main {
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+}
+
+.site-header {
+  padding-top: max(4px, env(safe-area-inset-top));
+}
+
+.site-footer {
+  padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
+}

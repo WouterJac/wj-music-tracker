@@ -19,3 +19,5 @@ port = 8000
 # Phone access: set allow_remote = true and host to "0.0.0.0" (or your Tailscale address).
 # Every /api request then needs the access token; run `wj-music pair` to pair a phone.
 allow_remote = false
+# Folder with the built frontend (npm run build). Leave empty to use frontend/dist in this repo.
+frontend_dir = ""
