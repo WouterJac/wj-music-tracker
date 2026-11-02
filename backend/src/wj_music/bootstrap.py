@@ -1,15 +1,18 @@
 """Composition root: wires settings to the storage, scanner and cover cache."""
 
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 
 from fastapi import FastAPI
 
 from wj_music.api.app import create_app
 from wj_music.config import MUSIC_PATH_ENV, Settings
+from wj_music.domain.auth import FailureLimiter
 from wj_music.domain.models import LibraryTotals
 from wj_music.scanner.errors import MusicFolderNotFoundError
 from wj_music.scanner.scan import ScanReport, scan_library
+from wj_music.services.auth import AuthService
 from wj_music.services.facts import FactsService
 from wj_music.services.library import LibraryService
 from wj_music.services.rediscover import RediscoverService
@@ -17,6 +20,7 @@ from wj_music.services.scan import ScanService, ScanSummary, ScanUnavailableErro
 from wj_music.services.similar import SimilarService
 from wj_music.services.stats import StatsService
 from wj_music.services.tracks import TrackService
+from wj_music.storage.auth_files import FilePairingCodes, load_or_create_token
 from wj_music.storage.covers import FileCoverStore
 from wj_music.storage.database import create_db_engine
 from wj_music.storage.facts_reader import SqlFactsReader
@@ -32,6 +36,10 @@ from wj_music.storage.view_history import SqlViewHistory
 DATABASE_NAME = "library.db"
 USER_DATABASE_NAME = "user.db"
 COVERS_DIR_NAME = "covers"
+TOKEN_FILE_NAME = "auth_token"
+PAIRING_FILE_NAME = "pairing.json"
+MAX_FAILED_ATTEMPTS = 10
+FAILURE_WINDOW = timedelta(seconds=60)
 
 
 class MusicPathNotConfiguredError(Exception):
@@ -43,6 +51,11 @@ class ScanOutcome:
     music_path: Path
     report: ScanReport
     totals: LibraryTotals
+
+
+def default_frontend_dir() -> Path:
+    """The frontend build inside the repository: <repo>/frontend/dist."""
+    return Path(__file__).resolve().parents[3] / "frontend" / "dist"
 
 
 def database_path(settings: Settings) -> Path:
@@ -65,6 +78,15 @@ def run_scan(settings: Settings) -> ScanOutcome:
         return ScanOutcome(settings.music_path, report, count_library(engine))
     finally:
         engine.dispose()
+
+
+def build_auth(settings: Settings) -> AuthService:
+    """Token check for remote access. Creates the token file on first use."""
+    return AuthService(
+        load_or_create_token(settings.data_dir / TOKEN_FILE_NAME),
+        FilePairingCodes(settings.data_dir / PAIRING_FILE_NAME),
+        FailureLimiter(MAX_FAILED_ATTEMPTS, FAILURE_WINDOW),
+    )
 
 
 def _scan_summary(settings: Settings) -> ScanSummary:
@@ -107,4 +129,6 @@ def build_app(settings: Settings) -> FastAPI:
         rediscover=RediscoverService(library_reader, SqlViewHistory(user_engine)),
         covers_dir=settings.data_dir / COVERS_DIR_NAME,
         scan=ScanService(lambda: _scan_summary(settings)),
+        auth=build_auth(settings) if settings.allow_remote else None,
+        frontend_dir=settings.frontend_dir or default_frontend_dir(),
     )

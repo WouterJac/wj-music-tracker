@@ -1,3 +1,5 @@
+import { apiFetch } from "./auth";
+
 export interface Page<T> {
   items: T[];
   total: number;
@@ -224,7 +226,7 @@ function withParams(path: string, params: Record<string, string | number | undef
 }
 
 async function getJson<T>(url: string, isValid: Guard<T>): Promise<T> {
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (response.status === 404) {
     throw new NotFoundError(`${url} not found`);
   }
@@ -433,7 +435,7 @@ export function fetchRediscoverAlbums(count: number): Promise<Album[]> {
 
 /** Tells the backend this album was looked at, so rediscover can leave it for later. */
 export async function recordAlbumView(id: number): Promise<void> {
-  const response = await fetch(`/api/albums/${String(id)}/view`, { method: "POST" });
+  const response = await apiFetch(`/api/albums/${String(id)}/view`, { method: "POST" });
   if (!response.ok) {
     throw new Error(
       `Recording a view of album ${String(id)} responded with ${String(response.status)}`,
@@ -479,7 +481,7 @@ async function errorDetail(response: Response): Promise<string | null> {
 
 /** Scans the music folder again and returns what changed. Can take a while on a large library. */
 export async function runScan(): Promise<ScanSummary> {
-  const response = await fetch("/api/scan", { method: "POST" });
+  const response = await apiFetch("/api/scan", { method: "POST" });
   if (!response.ok) {
     // 409 and 422 carry a message meant for the user; anything else is a server fault.
     const detail =

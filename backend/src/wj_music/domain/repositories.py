@@ -21,6 +21,14 @@ from wj_music.domain.similar import AlbumProfile
 from wj_music.domain.stats import LibraryStats
 
 
+class PairingCodes(Protocol):
+    def issue(self, code: str, expires_at: datetime) -> None: ...
+
+    def redeem(self, code: str, now: datetime) -> bool:
+        """True if the code is the pending one and not expired. It then cannot be used again."""
+        ...
+
+
 class ScannedFileRepository(Protocol):
     def all(self) -> list[ScannedFile]: ...
 

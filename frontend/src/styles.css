@@ -154,6 +154,35 @@ main {
   color: var(--color-danger);
 }
 
+.pairing {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--gutter);
+}
+
+.pairing form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pairing input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 1.25rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pairing [role="alert"] {
+  color: var(--color-danger);
+}
+
 /* Controls */
 .filters {
   display: flex;
@@ -717,4 +746,32 @@ a.bar-row:hover .bar-label {
 
 .album-grid + button {
   margin-top: 16px;
+}
+
+/* Phones: keep content clear of notches and the home bar, and make taps immediate. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+a,
+button,
+input,
+select {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-header,
+.site-footer,
+main {
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+}
+
+.site-header {
+  padding-top: max(4px, env(safe-area-inset-top));
+}
+
+.site-footer {
+  padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
 }

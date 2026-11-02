@@ -10,7 +10,8 @@
 ## Structure
 - `src/features/<area>/`: components, hooks and API calls for one area (library, stats, facts, explore).
 - `src/components/`: shared, feature-agnostic UI only.
-- `src/api/`: typed client. One function per endpoint.
+- `src/api/`: typed client. One function per endpoint. Every API call goes through `apiFetch` (`api/auth.ts`), which adds the access token. Cover images use `CoverImage`, since an `<img>` cannot send the token.
+- `public/`: the web app manifest, icons and the service worker (`sw.js`). The worker caches the app shell only and never `/api`.
 - Keep page components thin. They compose feature components and hooks.
 
 ## Data fetching and states
