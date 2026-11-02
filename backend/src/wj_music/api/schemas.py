@@ -43,6 +43,11 @@ class AlbumOut(BaseModel):
     cover_url: str | None
 
 
+class GenreOut(BaseModel):
+    name: str
+    album_count: int
+
+
 class TrackOut(BaseModel):
     id: int
     disc: int | None

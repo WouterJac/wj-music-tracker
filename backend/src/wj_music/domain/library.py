@@ -31,6 +31,12 @@ class AlbumSummary:
 
 
 @dataclass(frozen=True)
+class GenreCount:
+    name: str
+    album_count: int
+
+
+@dataclass(frozen=True)
 class TrackDetail:
     id: int
     disc: int | None

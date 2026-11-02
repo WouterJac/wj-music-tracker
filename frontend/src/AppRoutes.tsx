@@ -6,6 +6,7 @@ import { AlbumDetailPage } from "./features/albums/AlbumDetailPage";
 import { AlbumsPage } from "./features/albums/AlbumsPage";
 import { ArtistDetailPage } from "./features/artists/ArtistDetailPage";
 import { ArtistsPage } from "./features/artists/ArtistsPage";
+import { ExplorePage } from "./features/explore/ExplorePage";
 import { FactsPage } from "./features/facts/FactsPage";
 import { LyricsSearchPage } from "./features/lyrics/LyricsSearchPage";
 import { StatsPage } from "./features/stats/StatsPage";
@@ -23,6 +24,7 @@ export function AppRoutes() {
         <Route path="tracks/:trackId" element={<TrackPage />} />
         <Route path="lyrics" element={<LyricsSearchPage />} />
         <Route path="stats" element={<StatsPage />} />
+        <Route path="explore" element={<ExplorePage />} />
         <Route path="facts" element={<FactsPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
