@@ -13,6 +13,9 @@ music_path = ""
 directory = ""
 
 [server]
-# Bound to localhost only. See API-AUTH.md before changing this.
+# Bound to localhost only unless allow_remote is true. See API-AUTH.md before changing this.
 host = "127.0.0.1"
 port = 8000
+# Phone access: set allow_remote = true and host to "0.0.0.0" (or your Tailscale address).
+# Every /api request then needs the access token; run `wj-music pair` to pair a phone.
+allow_remote = false

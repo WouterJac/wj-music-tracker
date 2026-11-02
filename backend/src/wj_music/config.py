@@ -22,6 +22,7 @@ class Settings:
     data_dir: Path
     host: str
     port: int
+    allow_remote: bool = False
 
 
 def default_data_dir(env: Mapping[str, str]) -> Path:
@@ -65,9 +66,17 @@ def load_settings(
     if not isinstance(port, int) or not 1 <= port <= 65535:
         raise ValueError(f"server.port must be an integer from 1 to 65535, got {port!r}")
 
+    allow_remote = server.get("allow_remote", False)
+    if not isinstance(allow_remote, bool):
+        raise ValueError(f"server.allow_remote must be true or false, got {allow_remote!r}")
+
     host = server.get("host", DEFAULT_HOST)
-    if not _is_loopback(host):
-        raise ValueError(f"server.host must be a loopback address (see API-AUTH.md), got {host!r}")
+    remote_host = allow_remote and isinstance(host, str) and host.strip() != ""
+    if not _is_loopback(host) and not remote_host:
+        raise ValueError(
+            "server.host must be a loopback address unless server.allow_remote is true "
+            f"(see API-AUTH.md), got {host!r}"
+        )
 
     music_path = environ.get(MUSIC_PATH_ENV) or library.get("music_path", "")
     directory = data.get("directory", "")
@@ -76,6 +85,7 @@ def load_settings(
         data_dir=Path(directory) if directory else default_data_dir(environ),
         host=host,
         port=port,
+        allow_remote=allow_remote,
     )
 
 

@@ -154,3 +154,37 @@ def test_invalid_toml_names_the_file_and_the_problem(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match=r"config\.local\.toml.*Unescaped"):
         load_settings(config, {})
+
+
+def test_remote_access_is_off_by_default(tmp_path: Path) -> None:
+    assert load_settings(tmp_path / "missing.toml", {}).allow_remote is False
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.20", "100.64.0.7", "pc.tailnet.ts.net"])
+def test_non_loopback_host_is_accepted_when_remote_access_is_allowed(
+    tmp_path: Path, host: str
+) -> None:
+    config = write_config(
+        tmp_path / "config.local.toml", f'[server]\nhost = "{host}"\nallow_remote = true\n'
+    )
+
+    settings = load_settings(config, {})
+
+    assert (settings.host, settings.allow_remote) == (host, True)
+
+
+def test_an_empty_host_is_rejected_even_when_remote_access_is_allowed(tmp_path: Path) -> None:
+    config = write_config(
+        tmp_path / "config.local.toml", '[server]\nhost = ""\nallow_remote = true\n'
+    )
+
+    with pytest.raises(ValueError, match="server.host"):
+        load_settings(config, {})
+
+
+@pytest.mark.parametrize("value", ['"yes"', "1"])
+def test_allow_remote_must_be_a_boolean(tmp_path: Path, value: str) -> None:
+    config = write_config(tmp_path / "config.local.toml", f"[server]\nallow_remote = {value}\n")
+
+    with pytest.raises(ValueError, match="server.allow_remote"):
+        load_settings(config, {})

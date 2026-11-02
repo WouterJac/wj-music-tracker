@@ -1,3 +1,5 @@
+import re
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -6,6 +8,7 @@ from typer.testing import CliRunner
 
 from flac_builder import build_flac
 from wj_music.cli import app
+from wj_music.storage.auth_files import FilePairingCodes
 
 runner = CliRunner()
 
@@ -152,3 +155,50 @@ def test_invalid_config_file_gives_a_readable_error(tmp_path: Path) -> None:
     assert result.exit_code == 2
     assert "config.toml" in result.output
     assert "Traceback" not in result.output
+
+
+@pytest.fixture
+def remote_config_file(tmp_path: Path, music: Path) -> Path:
+    path = tmp_path / "remote.toml"
+    path.write_text(
+        f'[library]\nmusic_path = "{music.as_posix()}"\n\n'
+        f'[data]\ndirectory = "{(tmp_path / "data").as_posix()}"\n\n'
+        '[server]\nhost = "0.0.0.0"\nallow_remote = true\n',
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_pair_prints_a_code_that_the_server_accepts_once(
+    remote_config_file: Path, tmp_path: Path
+) -> None:
+    result = runner.invoke(app, ["pair", "--config", str(remote_config_file)])
+
+    assert result.exit_code == 0, result.output
+    match = re.search(r"Pairing code: ([A-Z2-9]{4})-([A-Z2-9]{4})", result.output)
+    assert match is not None, result.output
+    assert "5 minutes" in result.output
+    token = (tmp_path / "data" / "auth_token").read_text(encoding="utf-8").strip()
+    assert token not in result.output
+    codes = FilePairingCodes(tmp_path / "data" / "pairing.json")
+    assert codes.redeem("".join(match.groups()), datetime.now(UTC))
+    assert not codes.redeem("".join(match.groups()), datetime.now(UTC))
+
+
+def test_pair_refuses_when_remote_access_is_off(config_file: Path) -> None:
+    result = runner.invoke(app, ["pair", "--config", str(config_file)])
+
+    assert result.exit_code == 2
+    assert "allow_remote" in result.output
+
+
+def test_serve_says_so_when_remote_access_is_on(
+    remote_config_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("wj_music.cli.uvicorn.run", lambda *args, **kwargs: None)
+
+    result = runner.invoke(app, ["serve", "--config", str(remote_config_file)])
+
+    assert result.exit_code == 0, result.output
+    assert "Remote access is on" in result.output
+    assert "wj-music pair" in result.output
