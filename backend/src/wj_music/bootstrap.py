@@ -6,12 +6,14 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from wj_music.api.app import create_app
-from wj_music.config import Settings
+from wj_music.config import MUSIC_PATH_ENV, Settings
 from wj_music.domain.models import LibraryTotals
+from wj_music.scanner.errors import MusicFolderNotFoundError
 from wj_music.scanner.scan import ScanReport, scan_library
 from wj_music.services.facts import FactsService
 from wj_music.services.library import LibraryService
 from wj_music.services.rediscover import RediscoverService
+from wj_music.services.scan import ScanService, ScanSummary, ScanUnavailableError
 from wj_music.services.similar import SimilarService
 from wj_music.services.stats import StatsService
 from wj_music.services.tracks import TrackService
@@ -65,6 +67,29 @@ def run_scan(settings: Settings) -> ScanOutcome:
         engine.dispose()
 
 
+def _scan_summary(settings: Settings) -> ScanSummary:
+    """Run a scan for the web app, turning setup problems into a message for the user."""
+    try:
+        outcome = run_scan(settings)
+    except MusicPathNotConfiguredError:
+        raise ScanUnavailableError(
+            f"No music folder set. Set music_path in config.local.toml or {MUSIC_PATH_ENV}."
+        ) from None
+    except MusicFolderNotFoundError as exc:
+        raise ScanUnavailableError(str(exc)) from None
+    report, totals = outcome.report, outcome.totals
+    return ScanSummary(
+        added=len(report.added),
+        changed=len(report.changed),
+        removed=len(report.removed),
+        unchanged=report.unchanged,
+        errors=len(report.errors),
+        tracks=totals.tracks,
+        albums=totals.albums,
+        artists=totals.artists,
+    )
+
+
 def build_app(settings: Settings) -> FastAPI:
     """The web application over the library database, created empty if no scan has run yet."""
     db_path = database_path(settings)
@@ -81,4 +106,5 @@ def build_app(settings: Settings) -> FastAPI:
         similar=SimilarService(SqlSimilarReader(engine), library_reader),
         rediscover=RediscoverService(library_reader, SqlViewHistory(user_engine)),
         covers_dir=settings.data_dir / COVERS_DIR_NAME,
+        scan=ScanService(lambda: _scan_summary(settings)),
     )
