@@ -652,3 +652,35 @@ a.bar-row:hover .bar-label {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Explore */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--color-fg);
+  text-decoration: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+}
+
+.chip:hover {
+  background: var(--color-surface-2);
+}
+
+.chip-count {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}

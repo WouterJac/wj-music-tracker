@@ -11,16 +11,40 @@ import { AlbumCard } from "./AlbumCard";
 
 export const PAGE_SIZE = 24;
 
+function RemoveChip({ label, kind, to }: { label: string; kind: string; to: URLSearchParams }) {
+  const search = to.toString();
+  return (
+    <Link
+      to={search ? `/albums?${search}` : "/albums"}
+      className="chip"
+      aria-label={`Remove ${kind} ${label}`}
+    >
+      {label}
+      <span aria-hidden="true"> ×</span>
+    </Link>
+  );
+}
+
 export function AlbumsPage() {
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
   const year = toPositiveInt(params.get("year"));
+  const decade = toPositiveInt(params.get("decade"));
+  const genre = params.get("genre") ?? "";
   const page = toPositiveInt(params.get("page")) ?? 1;
-  const filtered = query !== "" || year !== undefined;
+  const filtered = query !== "" || year !== undefined || decade !== undefined || genre !== "";
 
   const albums = useQuery({
-    queryKey: ["albums", query, year, page],
-    queryFn: () => fetchAlbums({ query, year, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    queryKey: ["albums", query, year, decade, genre, page],
+    queryFn: () =>
+      fetchAlbums({
+        query,
+        year,
+        decade,
+        genre,
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+      }),
     placeholderData: keepPreviousData,
   });
   const years = useQuery({ queryKey: ["years"], queryFn: fetchYears });
@@ -59,6 +83,28 @@ export function AlbumsPage() {
           </select>
         </label>
       </div>
+      {(decade !== undefined || genre !== "") && (
+        <ul className="chips" aria-label="Active filters">
+          {decade !== undefined && (
+            <li>
+              <RemoveChip
+                label={`${String(decade)}s`}
+                kind="decade"
+                to={withParam(params, { decade: undefined, page: undefined })}
+              />
+            </li>
+          )}
+          {genre !== "" && (
+            <li>
+              <RemoveChip
+                label={genre}
+                kind="genre"
+                to={withParam(params, { genre: undefined, page: undefined })}
+              />
+            </li>
+          )}
+        </ul>
+      )}
       <QueryState
         query={albums}
         noun="albums"

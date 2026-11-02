@@ -107,6 +107,41 @@ describe("AlbumsPage", () => {
     });
   });
 
+  it("reads decade and genre from the URL and sends them to the API", async () => {
+    const fetchMock = albumsApi();
+
+    renderAt("/albums?decade=1970&genre=Art+Rock");
+
+    await waitFor(() => {
+      const request = requestsTo(fetchMock, "/api/albums").at(0);
+      expect(request?.searchParams.get("decade")).toBe("1970");
+      expect(request?.searchParams.get("genre")).toBe("Art Rock");
+    });
+  });
+
+  it("names the active decade and genre filters and lets each be removed", async () => {
+    albumsApi();
+    renderAt("/albums?decade=1970&genre=Rock");
+    await screen.findByRole("link", { name: /Low/ });
+
+    expect(screen.getByRole("link", { name: "Remove decade 1970s" })).toHaveAttribute(
+      "href",
+      "/albums?genre=Rock",
+    );
+    expect(screen.getByRole("link", { name: "Remove genre Rock" })).toHaveAttribute(
+      "href",
+      "/albums?decade=1970",
+    );
+  });
+
+  it("treats a decade or genre filter as a filter when nothing matches", async () => {
+    albumsApi([]);
+
+    renderAt("/albums?genre=Polka");
+
+    expect(await screen.findByText("No albums match your search.")).toBeInTheDocument();
+  });
+
   it("searches as the user types", async () => {
     const fetchMock = albumsApi();
     const user = userEvent.setup();

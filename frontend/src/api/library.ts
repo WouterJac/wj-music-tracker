@@ -241,6 +241,8 @@ async function getJson<T>(url: string, isValid: Guard<T>): Promise<T> {
 export interface AlbumFilters {
   query?: string;
   year?: number;
+  decade?: number;
+  genre?: string;
   artistId?: number;
   limit: number;
   offset: number;
@@ -251,6 +253,8 @@ export function fetchAlbums(filters: AlbumFilters): Promise<Page<Album>> {
     q: filters.query,
     artist_id: filters.artistId,
     year: filters.year,
+    decade: filters.decade,
+    genre: filters.genre,
     limit: filters.limit,
     offset: filters.offset,
   });
@@ -372,6 +376,44 @@ function isFactList(value: unknown): value is { items: Fact[] } {
 
 export async function fetchFacts(): Promise<Fact[]> {
   return (await getJson("/api/facts", isFactList)).items;
+}
+
+export interface GenreCount {
+  name: string;
+  album_count: number;
+}
+
+function isAlbumList(value: unknown): value is Album[] {
+  return Array.isArray(value) && value.every(isAlbum);
+}
+
+function isGenreList(value: unknown): value is GenreCount[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) && typeof item.name === "string" && typeof item.album_count === "number",
+    )
+  );
+}
+
+export interface RandomAlbumFilters {
+  count: number;
+  decade?: number;
+  genre?: string;
+}
+
+export function fetchRandomAlbums(filters: RandomAlbumFilters): Promise<Album[]> {
+  const url = withParams("/api/albums/random", {
+    count: filters.count,
+    decade: filters.decade,
+    genre: filters.genre,
+  });
+  return getJson(url, isAlbumList);
+}
+
+export function fetchGenres(): Promise<GenreCount[]> {
+  return getJson("/api/genres", isGenreList);
 }
 
 export function fetchYears(): Promise<number[]> {
