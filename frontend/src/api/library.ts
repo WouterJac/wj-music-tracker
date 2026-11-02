@@ -378,6 +378,30 @@ export async function fetchFacts(): Promise<Fact[]> {
   return (await getJson("/api/facts", isFactList)).items;
 }
 
+export interface SimilarAlbum {
+  album: Album;
+  score: number;
+  reasons: string[];
+}
+
+function isSimilarList(value: unknown): value is SimilarAlbum[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        isAlbum(item.album) &&
+        typeof item.score === "number" &&
+        Array.isArray(item.reasons) &&
+        item.reasons.every((reason) => typeof reason === "string"),
+    )
+  );
+}
+
+export function fetchSimilarAlbums(id: number): Promise<SimilarAlbum[]> {
+  return getJson(`/api/albums/${String(id)}/similar`, isSimilarList);
+}
+
 export interface GenreCount {
   name: string;
   album_count: number;

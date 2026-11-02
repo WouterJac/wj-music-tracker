@@ -8,6 +8,7 @@ import { Skeleton } from "../../components/Skeleton";
 import { formatChannels, formatQuality, formatTotalDuration } from "../../lib/format";
 import { toPositiveInt } from "../../lib/params";
 import { coverAlt } from "./AlbumCard";
+import { SimilarAlbums } from "./SimilarAlbums";
 import { TrackList } from "./TrackList";
 
 const notFound = <ItemNotFound noun="Album" backTo="/albums" backLabel="Back to albums" />;
@@ -86,6 +87,9 @@ function AlbumContent({ album }: { album: AlbumDetail }) {
         ) : (
           <TrackList tracks={album.tracks} />
         )}
+      </div>
+      <div className="album-similar">
+        <SimilarAlbums albumId={album.id} />
       </div>
     </article>
   );
