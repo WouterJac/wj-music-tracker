@@ -18,3 +18,12 @@ GENRES = {
     "Sky Saw": {"genre": "Ambient"},
     "First disc": {"genre": "ambient "},
 }
+
+
+def merged(*tag_sets: dict[str, dict[str, str]]) -> dict[str, dict[str, str]]:
+    """Combines tag dicts so two sets naming the same track keep all of its tags."""
+    out: dict[str, dict[str, str]] = {}
+    for tag_set in tag_sets:
+        for title, values in tag_set.items():
+            out.setdefault(title, {}).update(values)
+    return out

@@ -16,6 +16,7 @@ from wj_music.domain.library import (
     TrackInfo,
 )
 from wj_music.domain.lyrics import parse_lrc
+from wj_music.domain.similar import SimilarAlbum
 from wj_music.domain.stats import Bucket, LibraryStats
 
 T = TypeVar("T")
@@ -295,3 +296,15 @@ def facts_out(facts: list[Fact]) -> FactsOut:
             for f in facts
         ]
     )
+
+
+class SimilarAlbumOut(BaseModel):
+    album: AlbumOut
+    score: int
+    reasons: list[str]
+
+
+def similar_out(items: list[SimilarAlbum]) -> list[SimilarAlbumOut]:
+    return [
+        SimilarAlbumOut(album=album_out(i.album), score=i.score, reasons=i.reasons) for i in items
+    ]
