@@ -4,6 +4,7 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
+from wj_music.domain.facts import Fact
 from wj_music.domain.library import (
     AlbumDetail,
     AlbumSummary,
@@ -258,4 +259,34 @@ def stats_out(stats: LibraryStats) -> StatsOut:
             TopArtistOut(id=a.id, name=a.name, tracks=a.tracks, albums=a.albums)
             for a in stats.top_artists
         ],
+    )
+
+
+class FactLinkOut(BaseModel):
+    kind: str
+    id: int
+
+
+class FactOut(BaseModel):
+    key: str
+    title: str
+    text: str
+    link: FactLinkOut
+
+
+class FactsOut(BaseModel):
+    items: list[FactOut]
+
+
+def facts_out(facts: list[Fact]) -> FactsOut:
+    return FactsOut(
+        items=[
+            FactOut(
+                key=f.key,
+                title=f.title,
+                text=f.text,
+                link=FactLinkOut(kind=f.link.kind, id=f.link.id),
+            )
+            for f in facts
+        ]
     )

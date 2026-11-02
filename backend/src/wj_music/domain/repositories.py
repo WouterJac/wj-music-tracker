@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Protocol
 
+from wj_music.domain.facts import Fact
 from wj_music.domain.library import (
     AlbumDetail,
     AlbumSummary,
@@ -70,3 +71,7 @@ class TrackReader(Protocol):
 
 class StatsReader(Protocol):
     def library_stats(self) -> LibraryStats: ...
+
+
+class FactsReader(Protocol):
+    def facts(self) -> list[Fact]: ...

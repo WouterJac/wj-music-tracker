@@ -9,11 +9,13 @@ from wj_music.api.app import create_app
 from wj_music.config import Settings
 from wj_music.domain.models import LibraryTotals
 from wj_music.scanner.scan import ScanReport, scan_library
+from wj_music.services.facts import FactsService
 from wj_music.services.library import LibraryService
 from wj_music.services.stats import StatsService
 from wj_music.services.tracks import TrackService
 from wj_music.storage.covers import FileCoverStore
 from wj_music.storage.database import create_db_engine
+from wj_music.storage.facts_reader import SqlFactsReader
 from wj_music.storage.library_reader import SqlLibraryReader
 from wj_music.storage.migrate import upgrade_database
 from wj_music.storage.repositories import SqlScannedFileRepository, SqlTrackRepository
@@ -67,5 +69,6 @@ def build_app(settings: Settings) -> FastAPI:
         library=LibraryService(SqlLibraryReader(engine)),
         tracks=TrackService(SqlTrackReader(engine)),
         stats=StatsService(SqlStatsReader(engine)),
+        facts=FactsService(SqlFactsReader(engine)),
         covers_dir=settings.data_dir / COVERS_DIR_NAME,
     )
