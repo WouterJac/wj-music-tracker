@@ -1,5 +1,6 @@
 """SQL queries behind the browsing API. Read only."""
 
+from collections import Counter
 from typing import Any
 
 from sqlalchemy import ColumnElement, Engine, Row, Select, distinct, func, or_, select
@@ -10,6 +11,7 @@ from wj_music.domain.library import (
     AlbumSummary,
     ArtistDetail,
     ArtistSummary,
+    GenreCount,
     Page,
     TrackDetail,
     leading_int,
@@ -29,10 +31,12 @@ class SqlLibraryReader:
         query: str | None = None,
         artist_id: int | None = None,
         year: int | None = None,
+        decade: int | None = None,
+        genre: str | None = None,
         limit: int,
         offset: int = 0,
     ) -> Page[AlbumSummary]:
-        conditions = _album_conditions(query, artist_id, year)
+        conditions = _album_conditions(query, artist_id, year, decade, genre)
         with Session(self._engine) as session:
             total = session.scalar(
                 select(func.count())
@@ -42,6 +46,37 @@ class SqlLibraryReader:
             )
             rows = session.execute(_album_summaries(conditions).limit(limit).offset(offset))
             return Page(items=[_album_summary(row) for row in rows], total=total or 0)
+
+    def random_albums(
+        self, *, count: int, decade: int | None = None, genre: str | None = None
+    ) -> list[AlbumSummary]:
+        conditions = _album_conditions(None, None, None, decade, genre)
+        statement = _album_summaries(conditions).order_by(None).order_by(func.random()).limit(count)
+        with Session(self._engine) as session:
+            return [_album_summary(row) for row in session.execute(statement)]
+
+    def list_genres(self) -> list[GenreCount]:
+        with Session(self._engine) as session:
+            rows = session.execute(
+                select(TrackRow.album_id, TrackRow.genre).where(
+                    TrackRow.album_id.is_not(None), TrackRow.genre.is_not(None)
+                )
+            )
+            albums_by_genre: dict[str, set[int]] = {}
+            spellings: dict[str, Counter[str]] = {}
+            for album_id, genre in rows:
+                if album_id is None or genre is None or not (name := genre.strip()):
+                    continue
+                key = name.lower()
+                albums_by_genre.setdefault(key, set()).add(album_id)
+                spellings.setdefault(key, Counter())[name] += 1
+        # Tags differ in case and spacing; show the spelling used most, capitals first on a tie.
+        names = {
+            key: min(counts, key=lambda spelling: (-counts[spelling], spelling))
+            for key, counts in spellings.items()
+        }
+        ranked = sorted(albums_by_genre, key=lambda k: (-len(albums_by_genre[k]), names[k].lower()))
+        return [GenreCount(name=names[k], album_count=len(albums_by_genre[k])) for k in ranked]
 
     def get_album(self, album_id: int) -> AlbumDetail | None:
         with Session(self._engine) as session:
@@ -127,7 +162,11 @@ class SqlLibraryReader:
 
 
 def _album_conditions(
-    query: str | None, artist_id: int | None, year: int | None
+    query: str | None,
+    artist_id: int | None,
+    year: int | None,
+    decade: int | None = None,
+    genre: str | None = None,
 ) -> list[ColumnElement[bool]]:
     conditions: list[ColumnElement[bool]] = []
     if query:
@@ -136,6 +175,15 @@ def _album_conditions(
         conditions.append(AlbumRow.artist_id == artist_id)
     if year is not None:
         conditions.append(AlbumRow.date.like(f"{year:04d}%"))
+    if decade is not None:
+        conditions.append(AlbumRow.date.like(f"{decade // 10:03d}%"))
+    if genre:
+        wanted = genre.strip().lower()
+        conditions.append(
+            AlbumRow.id.in_(
+                select(TrackRow.album_id).where(func.lower(func.trim(TrackRow.genre)) == wanted)
+            )
+        )
     return conditions
 
 

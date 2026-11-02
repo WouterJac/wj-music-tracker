@@ -11,8 +11,10 @@ from wj_music.api.schemas import (
     AlbumOut,
     ArtistDetailOut,
     ArtistOut,
+    GenreOut,
     PageOut,
     album_detail_out,
+    album_out,
     album_page_out,
     artist_detail_out,
     artist_page_out,
@@ -26,6 +28,9 @@ COVER_CACHE_SECONDS = 3600
 Search = Annotated[str | None, Query(max_length=100)]
 Limit = Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)]
 Offset = Annotated[int, Query(ge=0)]
+Decade = Annotated[int | None, Query(ge=1000, le=9990, multiple_of=10)]
+Genre = Annotated[str | None, Query(max_length=100)]
+MAX_RANDOM_ALBUMS = 12
 
 
 def library_router(service: LibraryService, covers_dir: Path | None) -> APIRouter:
@@ -36,13 +41,35 @@ def library_router(service: LibraryService, covers_dir: Path | None) -> APIRoute
         q: Search = None,
         artist_id: int | None = None,
         year: Annotated[int | None, Query(ge=1000, le=9999)] = None,
+        decade: Decade = None,
+        genre: Genre = None,
         limit: Limit = DEFAULT_PAGE_SIZE,
         offset: Offset = 0,
     ) -> PageOut[AlbumOut]:
         page = service.list_albums(
-            query=q, artist_id=artist_id, year=year, limit=limit, offset=offset
+            query=q,
+            artist_id=artist_id,
+            year=year,
+            decade=decade,
+            genre=genre,
+            limit=limit,
+            offset=offset,
         )
         return album_page_out(page, limit, offset)
+
+    # Declared before /albums/{album_id}, which would otherwise try to read "random" as an id.
+    @router.get("/albums/random")
+    def random_albums(
+        count: Annotated[int, Query(ge=1, le=MAX_RANDOM_ALBUMS)] = 1,
+        decade: Decade = None,
+        genre: Genre = None,
+    ) -> list[AlbumOut]:
+        albums = service.random_albums(count=count, decade=decade, genre=genre)
+        return [album_out(a) for a in albums]
+
+    @router.get("/genres")
+    def list_genres() -> list[GenreOut]:
+        return [GenreOut(name=g.name, album_count=g.album_count) for g in service.list_genres()]
 
     @router.get("/albums/{album_id}")
     def get_album(album_id: int) -> AlbumDetailOut:

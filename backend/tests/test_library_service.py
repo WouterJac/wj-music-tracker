@@ -38,5 +38,23 @@ def test_search_text_is_trimmed() -> None:
     service.list_albums(query="  low  ", artist_id=3, year=1977, limit=10, offset=5)
 
     assert reader.album_calls == [
-        {"query": "low", "artist_id": 3, "year": 1977, "limit": 10, "offset": 5}
+        {
+            "query": "low",
+            "artist_id": 3,
+            "year": 1977,
+            "decade": None,
+            "genre": None,
+            "limit": 10,
+            "offset": 5,
+        }
     ]
+
+
+def test_genre_text_is_trimmed_and_blank_means_no_filter() -> None:
+    reader = RecordingReader()
+    service = LibraryService(reader)  # type: ignore[arg-type]
+
+    service.list_albums(query=None, artist_id=None, year=None, genre="  Rock ", limit=1, offset=0)
+    service.list_albums(query=None, artist_id=None, year=None, genre="  ", limit=1, offset=0)
+
+    assert [call["genre"] for call in reader.album_calls] == ["Rock", None]

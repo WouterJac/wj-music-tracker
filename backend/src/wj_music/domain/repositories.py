@@ -9,6 +9,7 @@ from wj_music.domain.library import (
     AlbumSummary,
     ArtistDetail,
     ArtistSummary,
+    GenreCount,
     LyricsHit,
     Page,
     TrackInfo,
@@ -46,9 +47,17 @@ class LibraryReader(Protocol):
         query: str | None = None,
         artist_id: int | None = None,
         year: int | None = None,
+        decade: int | None = None,
+        genre: str | None = None,
         limit: int,
         offset: int = 0,
     ) -> Page[AlbumSummary]: ...
+
+    def random_albums(
+        self, *, count: int, decade: int | None = None, genre: str | None = None
+    ) -> list[AlbumSummary]: ...
+
+    def list_genres(self) -> list[GenreCount]: ...
 
     def get_album(self, album_id: int) -> AlbumDetail | None: ...
 

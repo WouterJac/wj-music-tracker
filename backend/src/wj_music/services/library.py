@@ -5,6 +5,7 @@ from wj_music.domain.library import (
     AlbumSummary,
     ArtistDetail,
     ArtistSummary,
+    GenreCount,
     Page,
 )
 from wj_music.domain.repositories import LibraryReader
@@ -20,12 +21,28 @@ class LibraryService:
         query: str | None,
         artist_id: int | None,
         year: int | None,
+        decade: int | None = None,
+        genre: str | None = None,
         limit: int,
         offset: int,
     ) -> Page[AlbumSummary]:
         return self._reader.list_albums(
-            query=_clean(query), artist_id=artist_id, year=year, limit=limit, offset=offset
+            query=_clean(query),
+            artist_id=artist_id,
+            year=year,
+            decade=decade,
+            genre=_clean(genre),
+            limit=limit,
+            offset=offset,
         )
+
+    def random_albums(
+        self, *, count: int, decade: int | None = None, genre: str | None = None
+    ) -> list[AlbumSummary]:
+        return self._reader.random_albums(count=count, decade=decade, genre=_clean(genre))
+
+    def list_genres(self) -> list[GenreCount]:
+        return self._reader.list_genres()
 
     def get_album(self, album_id: int) -> AlbumDetail | None:
         return self._reader.get_album(album_id)
