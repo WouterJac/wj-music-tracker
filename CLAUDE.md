@@ -28,9 +28,9 @@ Phases 0 to 7 are built: foundation, library scanner, library browsing, lyrics, 
 
 **What exists**
 - Backend (`backend/src/wj_music/`): `domain`, `scanner`, `storage` (SQLite, Alembic migrations 0001 to 0003), `services`, `api`, composition root `bootstrap.py`, Typer CLI `wj-music scan|serve`.
-- API: `/health`, `/api/albums`, `/api/albums/{id}`, `/api/albums/{id}/cover`, `/api/artists`, `/api/artists/{id}`, `/api/years`, `/api/tracks/{id}`, `/api/lyrics/search`, `/api/stats`, `/api/facts`, `/api/genres`, `/api/albums/random`, `/api/albums/rediscover`, `POST /api/albums/{id}/view`, `/api/albums/{id}/similar`; `/api/albums` also filters by `decade` and `genre`.
-- Frontend (`frontend/src/`): pages Albums, Artists, album/artist/track detail, Lyrics search, Statistics (`/stats`), Facts (`/facts`), Explore (`/explore`, with a Rediscover section); the album page has a "You might also like" section. Shared pieces: `QueryState` (loading/error/empty/not-found), `Skeleton`, `Pagination`, `SearchBox`, `BarChart`. Facts and stats follow the pattern: pure rules in `domain/`, a reader that fetches rows, a thin service and route.
-- Last verified: backend 366 tests, frontend 143 tests, ruff, mypy strict, eslint, tsc, prettier, build all clean.
+- API: `/health`, `/api/albums`, `/api/albums/{id}`, `/api/albums/{id}/cover`, `/api/artists`, `/api/artists/{id}`, `/api/years`, `/api/tracks/{id}`, `/api/lyrics/search`, `/api/stats`, `/api/facts`, `/api/genres`, `/api/albums/random`, `/api/albums/rediscover`, `POST /api/albums/{id}/view`, `/api/albums/{id}/similar`, `POST /api/scan` (runs a scan, one at a time); `/api/albums` also filters by `decade` and `genre`.
+- Frontend (`frontend/src/`): pages Albums, Artists, album/artist/track detail, Lyrics search, Statistics (`/stats`), Facts (`/facts`), Explore (`/explore`, with a Rediscover section); the album page has a "You might also like" section. A footer "Refresh library" button on every page runs a scan and reloads what is on screen (SCRUM-43). Shared pieces: `QueryState` (loading/error/empty/not-found), `Skeleton`, `Pagination`, `SearchBox`, `BarChart`. Facts and stats follow the pattern: pure rules in `domain/`, a reader that fetches rows, a thin service and route.
+- Last verified: backend 374 tests, frontend 151 tests, ruff, mypy strict, eslint, tsc, prettier, build all clean.
 
 **Run it (Windows PowerShell)**
 - Backend: `cd backend`, then `.venv\Scripts\wj-music scan`, then `.venv\Scripts\wj-music serve` (port 8000).

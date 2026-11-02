@@ -24,7 +24,9 @@ export function mockApi(handler: (url: URL) => unknown) {
         return Promise.resolve(jsonResponse({ status: "ok", version: "0.1.0" }));
       }
       const result = handler(url);
-      return Promise.resolve(result instanceof Response ? result : jsonResponse(result));
+      return Promise.resolve(result).then((body) =>
+        body instanceof Response ? body : jsonResponse(body),
+      );
     },
   );
   vi.stubGlobal("fetch", fetchMock);

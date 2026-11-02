@@ -441,6 +441,58 @@ export async function recordAlbumView(id: number): Promise<void> {
   }
 }
 
+export interface ScanSummary {
+  added: number;
+  changed: number;
+  removed: number;
+  unchanged: number;
+  errors: number;
+  tracks: number;
+  albums: number;
+  artists: number;
+}
+
+const SCAN_FIELDS = [
+  "added",
+  "changed",
+  "removed",
+  "unchanged",
+  "errors",
+  "tracks",
+  "albums",
+  "artists",
+] as const;
+
+function isScanSummary(value: unknown): value is ScanSummary {
+  return isRecord(value) && SCAN_FIELDS.every((field) => typeof value[field] === "number");
+}
+
+/** The reason the server gives for refusing a request, if it gave one. */
+async function errorDetail(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    return isRecord(body) && typeof body.detail === "string" ? body.detail : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Scans the music folder again and returns what changed. Can take a while on a large library. */
+export async function runScan(): Promise<ScanSummary> {
+  const response = await fetch("/api/scan", { method: "POST" });
+  if (!response.ok) {
+    // 409 and 422 carry a message meant for the user; anything else is a server fault.
+    const detail =
+      response.status === 409 || response.status === 422 ? await errorDetail(response) : null;
+    throw new Error(detail ?? "Could not refresh the library. Check that the backend is running.");
+  }
+  const body: unknown = await response.json();
+  if (!isScanSummary(body)) {
+    throw new Error("/api/scan returned an unexpected body");
+  }
+  return body;
+}
+
 export function fetchRandomAlbums(filters: RandomAlbumFilters): Promise<Album[]> {
   const url = withParams("/api/albums/random", {
     count: filters.count,
