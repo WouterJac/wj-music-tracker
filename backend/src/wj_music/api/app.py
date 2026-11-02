@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from wj_music import __version__
 from wj_music.api.auth_routes import auth_router, install_token_check
 from wj_music.api.facts_routes import facts_router
+from wj_music.api.frontend_routes import mount_frontend
 from wj_music.api.library_routes import library_router
 from wj_music.api.rediscover_routes import rediscover_router
 from wj_music.api.scan_routes import scan_router
@@ -34,6 +35,7 @@ def create_app(
     rediscover: RediscoverService | None = None,
     scan: ScanService | None = None,
     auth: AuthService | None = None,
+    frontend_dir: Path | None = None,
 ) -> FastAPI:
     app = FastAPI(title="WJ Music Tracker", version=__version__)
 
@@ -60,5 +62,8 @@ def create_app(
         app.include_router(similar_router(similar))
     if scan is not None:
         app.include_router(scan_router(scan))
+    # Last, because it answers any path that no route above took.
+    if frontend_dir is not None:
+        mount_frontend(app, frontend_dir)
 
     return app

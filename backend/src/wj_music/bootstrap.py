@@ -53,6 +53,11 @@ class ScanOutcome:
     totals: LibraryTotals
 
 
+def default_frontend_dir() -> Path:
+    """The frontend build inside the repository: <repo>/frontend/dist."""
+    return Path(__file__).resolve().parents[3] / "frontend" / "dist"
+
+
 def database_path(settings: Settings) -> Path:
     return settings.data_dir / DATABASE_NAME
 
@@ -125,4 +130,5 @@ def build_app(settings: Settings) -> FastAPI:
         covers_dir=settings.data_dir / COVERS_DIR_NAME,
         scan=ScanService(lambda: _scan_summary(settings)),
         auth=build_auth(settings) if settings.allow_remote else None,
+        frontend_dir=settings.frontend_dir or default_frontend_dir(),
     )

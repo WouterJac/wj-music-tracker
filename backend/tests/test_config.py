@@ -188,3 +188,22 @@ def test_allow_remote_must_be_a_boolean(tmp_path: Path, value: str) -> None:
 
     with pytest.raises(ValueError, match="server.allow_remote"):
         load_settings(config, {})
+
+
+def test_frontend_folder_defaults_to_unset(tmp_path: Path) -> None:
+    assert load_settings(tmp_path / "missing.toml", {}).frontend_dir is None
+
+
+def test_frontend_folder_can_be_set(tmp_path: Path) -> None:
+    config = write_config(
+        tmp_path / "config.local.toml", '[server]\nfrontend_dir = "C:/apps/music/dist"\n'
+    )
+
+    assert load_settings(config, {}).frontend_dir == Path("C:/apps/music/dist")
+
+
+def test_frontend_folder_must_be_a_string(tmp_path: Path) -> None:
+    config = write_config(tmp_path / "config.local.toml", "[server]\nfrontend_dir = 5\n")
+
+    with pytest.raises(ValueError, match="server.frontend_dir"):
+        load_settings(config, {})

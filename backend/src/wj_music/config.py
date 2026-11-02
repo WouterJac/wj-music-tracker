@@ -23,6 +23,7 @@ class Settings:
     host: str
     port: int
     allow_remote: bool = False
+    frontend_dir: Path | None = None
 
 
 def default_data_dir(env: Mapping[str, str]) -> Path:
@@ -70,6 +71,10 @@ def load_settings(
     if not isinstance(allow_remote, bool):
         raise ValueError(f"server.allow_remote must be true or false, got {allow_remote!r}")
 
+    frontend_dir = server.get("frontend_dir", "")
+    if not isinstance(frontend_dir, str):
+        raise ValueError(f"server.frontend_dir must be a path, got {frontend_dir!r}")
+
     host = server.get("host", DEFAULT_HOST)
     remote_host = allow_remote and isinstance(host, str) and host.strip() != ""
     if not _is_loopback(host) and not remote_host:
@@ -86,6 +91,7 @@ def load_settings(
         host=host,
         port=port,
         allow_remote=allow_remote,
+        frontend_dir=Path(frontend_dir) if frontend_dir else None,
     )
 
 
