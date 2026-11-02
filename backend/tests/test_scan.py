@@ -327,3 +327,94 @@ def test_file_that_vanishes_during_the_walk_is_reported_and_the_scan_continues(
 
     assert [path for path, _ in report.errors] == [ghost]
     assert report.added == [real]
+
+
+class TestLyricsSidecars:
+    def stored(self, engine: Engine) -> tuple[str | None, str | None]:
+        with engine.connect() as conn:
+            row = conn.execute(select(TrackRow.lyrics, TrackRow.synced_lyrics)).one()
+        return row.lyrics, row.synced_lyrics
+
+    def test_sidecar_lyrics_are_stored_with_the_track(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        write_track(music, "01.flac", TITLE=["Song"])
+        (music / "01.lrc").write_text("[00:01.00]hello\n[00:02.00]world", encoding="utf-8")
+
+        scan(engine, music, covers)
+
+        assert self.stored(engine) == ("hello\nworld", "[00:01.00]hello\n[00:02.00]world")
+
+    def test_embedded_lyrics_are_stored(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        write_track(music, "01.flac", TITLE=["Song"], UNSYNCEDLYRICS=["la la"])
+
+        scan(engine, music, covers)
+
+        assert self.stored(engine) == ("la la", None)
+
+    def test_unchanged_flac_and_sidecar_are_skipped(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        write_track(music, "01.flac", TITLE=["Song"])
+        (music / "01.lrc").write_text("words", encoding="utf-8")
+        scan(engine, music, covers)
+
+        report = scan(engine, music, covers)
+
+        assert report.unchanged == 1
+        assert report.changed == []
+
+    def test_adding_a_sidecar_rescans_an_unchanged_flac(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        path = write_track(music, "01.flac", TITLE=["Song"])
+        scan(engine, music, covers)
+        (music / "01.lrc").write_text("new words", encoding="utf-8")
+
+        report = scan(engine, music, covers)
+
+        assert report.changed == [path]
+        assert self.stored(engine) == ("new words", None)
+
+    def test_editing_a_sidecar_rescans_the_track(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        path = write_track(music, "01.flac", TITLE=["Song"])
+        sidecar = music / "01.lrc"
+        sidecar.write_text("old", encoding="utf-8")
+        scan(engine, music, covers)
+        stat = sidecar.stat()
+        sidecar.write_text("a longer edit", encoding="utf-8")
+        os.utime(sidecar, (stat.st_atime, stat.st_mtime + 60))
+
+        report = scan(engine, music, covers)
+
+        assert report.changed == [path]
+        assert self.stored(engine) == ("a longer edit", None)
+
+    def test_removing_a_sidecar_clears_the_lyrics(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        path = write_track(music, "01.flac", TITLE=["Song"])
+        sidecar = music / "01.lrc"
+        sidecar.write_text("old", encoding="utf-8")
+        scan(engine, music, covers)
+        sidecar.unlink()
+
+        report = scan(engine, music, covers)
+
+        assert report.changed == [path]
+        assert self.stored(engine) == (None, None)
+
+    def test_scan_never_writes_next_to_the_music(
+        self, engine: Engine, music: Path, covers: FileCoverStore
+    ) -> None:
+        write_track(music, "01.flac", TITLE=["Song"])
+        (music / "01.lrc").write_text("[00:01.00]x", encoding="utf-8")
+        before = {p: p.read_bytes() for p in music.rglob("*") if p.is_file()}
+
+        scan(engine, music, covers)
+
+        assert {p: p.read_bytes() for p in music.rglob("*") if p.is_file()} == before

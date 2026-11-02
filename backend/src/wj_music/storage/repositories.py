@@ -22,6 +22,8 @@ class SqlScannedFileRepository:
                     size_bytes=row.size_bytes,
                     mtime=row.mtime,
                     error=row.error,
+                    lyrics_size_bytes=row.lyrics_size_bytes,
+                    lyrics_mtime=row.lyrics_mtime,
                 )
                 for row in rows
             ]
@@ -37,6 +39,8 @@ class SqlScannedFileRepository:
             row.size_bytes = scanned.size_bytes
             row.mtime = scanned.mtime
             row.error = scanned.error
+            row.lyrics_size_bytes = scanned.lyrics_size_bytes
+            row.lyrics_mtime = scanned.lyrics_mtime
 
     def delete(self, path: Path) -> None:
         with Session(self._engine) as session, session.begin():
@@ -69,7 +73,8 @@ class SqlTrackRepository:
             row.genre = tags.genre
             row.composer = tags.composer
             row.label = tags.label
-            row.lyrics = tags.lyrics
+            row.lyrics = flac.lyrics.plain if flac.lyrics else None
+            row.synced_lyrics = flac.lyrics.synced_lrc if flac.lyrics else None
             row.duration_seconds = flac.audio.duration_seconds
             row.sample_rate = flac.audio.sample_rate
             row.bit_depth = flac.audio.bit_depth

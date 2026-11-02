@@ -1,16 +1,17 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
 
-import { HealthStatus } from "./features/health/HealthStatus";
+import { createQueryClient } from "./api/queryClient";
+import { AppRoutes } from "./AppRoutes";
 
-const queryClient = new QueryClient();
+const queryClient = createQueryClient();
 
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <main>
-        <h1>WJ Music Tracker</h1>
-        <HealthStatus />
-      </main>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

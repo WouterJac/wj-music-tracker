@@ -6,8 +6,10 @@ from typing import Any, cast
 from mutagen import MutagenError
 from mutagen.flac import FLAC, VCFLACDict
 
+from wj_music.domain.lyrics import resolve_lyrics
 from wj_music.domain.models import AudioInfo, FlacFile, Picture, TrackTags
 from wj_music.scanner.errors import InvalidFlacError
+from wj_music.scanner.lyrics_file import read_sidecar
 
 FRONT_COVER_TYPE = 3
 
@@ -48,7 +50,15 @@ def read_flac(path: Path) -> FlacFile:
         channels=flac.info.channels,
         file_size_bytes=path.stat().st_size,
     )
-    return FlacFile(path=path, tags=tags, audio=audio, picture=_front_cover(flac.pictures))
+    lyrics = resolve_lyrics(
+        lyrics=tags.lyrics,
+        unsynced=tag("unsyncedlyrics"),
+        synced=tag("syncedlyrics"),
+        sidecar=read_sidecar(path),
+    )
+    return FlacFile(
+        path=path, tags=tags, audio=audio, picture=_front_cover(flac.pictures), lyrics=lyrics
+    )
 
 
 def _front_cover(pictures: list[Any]) -> Picture | None:

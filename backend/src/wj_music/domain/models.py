@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from wj_music.domain.lyrics import Lyrics
+
 
 @dataclass(frozen=True)
 class TrackTags:
@@ -38,6 +40,7 @@ class FlacFile:
     tags: TrackTags
     audio: AudioInfo
     picture: Picture | None = None
+    lyrics: Lyrics | None = None
 
 
 @dataclass(frozen=True)
@@ -46,3 +49,13 @@ class ScannedFile:
     size_bytes: int
     mtime: float
     error: str | None = None
+    # Size and mtime of the sidecar .lrc, so editing it triggers a rescan of an unchanged FLAC.
+    lyrics_size_bytes: int | None = None
+    lyrics_mtime: float | None = None
+
+
+@dataclass(frozen=True)
+class LibraryTotals:
+    tracks: int
+    albums: int
+    artists: int
