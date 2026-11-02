@@ -154,6 +154,35 @@ main {
   color: var(--color-danger);
 }
 
+.pairing {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--gutter);
+}
+
+.pairing form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pairing input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 1.25rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pairing [role="alert"] {
+  color: var(--color-danger);
+}
+
 /* Controls */
 .filters {
   display: flex;

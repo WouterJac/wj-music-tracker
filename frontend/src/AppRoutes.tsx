@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import { usePairingNeeded } from "./api/auth";
+
 import { Layout } from "./components/Layout";
 import { NotFound } from "./components/NotFound";
 import { AlbumDetailPage } from "./features/albums/AlbumDetailPage";
@@ -9,10 +11,12 @@ import { ArtistsPage } from "./features/artists/ArtistsPage";
 import { ExplorePage } from "./features/explore/ExplorePage";
 import { FactsPage } from "./features/facts/FactsPage";
 import { LyricsSearchPage } from "./features/lyrics/LyricsSearchPage";
+import { PairingPage } from "./features/pairing/PairingPage";
 import { StatsPage } from "./features/stats/StatsPage";
 import { TrackPage } from "./features/tracks/TrackPage";
 
 export function AppRoutes() {
+  if (usePairingNeeded()) return <PairingPage />;
   return (
     <Routes>
       <Route element={<Layout />}>

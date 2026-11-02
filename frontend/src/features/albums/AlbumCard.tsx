@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import type { Album } from "../../api/library";
+import { CoverImage } from "../../components/CoverImage";
 
 export function coverAlt(album: Pick<Album, "title" | "artist_name">): string {
   return album.artist_name
@@ -16,7 +17,7 @@ export function AlbumCard({ album, note }: { album: Album; note?: ReactNode }) {
     <li>
       <Link to={`/albums/${String(album.id)}`} className="album-card">
         {album.cover_url ? (
-          <img
+          <CoverImage
             className="cover"
             src={album.cover_url}
             alt={coverAlt(album)}

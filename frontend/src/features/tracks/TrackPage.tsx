@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { fetchTrack, type TrackInfo, type TrackLyrics } from "../../api/library";
+import { CoverImage } from "../../components/CoverImage";
 import { Highlight } from "../../components/Highlight";
 import { ItemNotFound } from "../../components/ItemNotFound";
 import { QueryState } from "../../components/QueryState";
@@ -45,7 +46,7 @@ function TrackContent({ track }: { track: TrackInfo }) {
   return (
     <article className="album-detail">
       {track.cover_url && track.album_title ? (
-        <img
+        <CoverImage
           className="cover detail-cover"
           src={track.cover_url}
           alt={coverAlt({ title: track.album_title, artist_name: track.artist_name })}

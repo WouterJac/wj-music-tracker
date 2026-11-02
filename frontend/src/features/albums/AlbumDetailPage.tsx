@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { fetchAlbum, recordAlbumView, type AlbumDetail, type Track } from "../../api/library";
+import { CoverImage } from "../../components/CoverImage";
 import { ItemNotFound } from "../../components/ItemNotFound";
 import { QueryState } from "../../components/QueryState";
 import { Skeleton } from "../../components/Skeleton";
@@ -72,7 +73,7 @@ function AlbumContent({ album }: { album: AlbumDetail }) {
   return (
     <article className="album-detail">
       {album.cover_url ? (
-        <img className="cover detail-cover" src={album.cover_url} alt={coverAlt(album)} />
+        <CoverImage className="cover detail-cover" src={album.cover_url} alt={coverAlt(album)} />
       ) : (
         <span className="cover cover-placeholder detail-cover" aria-hidden="true">
           ♪
